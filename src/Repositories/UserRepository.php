@@ -23,6 +23,13 @@ class UserRepository
         return $stmt->fetch() ?: null;
     }
 
+    public function permissionsForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare('SELECT p.name FROM permissions p JOIN role_permissions rp ON rp.permission_id=p.id JOIN users u ON u.role_id=rp.role_id WHERE u.id=? AND u.is_active=1');
+        $stmt->execute([$userId]);
+        return array_column($stmt->fetchAll(), 'name');
+    }
+
     public function createMember(array $data): int
     {
         $roleId = $this->db->query("SELECT id FROM roles WHERE name='user' LIMIT 1")->fetchColumn();

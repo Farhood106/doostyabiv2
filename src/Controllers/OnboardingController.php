@@ -18,6 +18,8 @@ class OnboardingController
             'steps' => (new FormRepository())->activeSteps(),
             'goals' => (new GoalRepository())->active(),
             'cities' => (new LocationRepository())->activeCities(),
+            'existingAnswers' => (new \App\Repositories\AnswerRepository())->existingForUser((int)$user['id']),
+            'selectedGoalIds' => array_map('intval', array_column((new GoalRepository())->forUser((int)$user['id']), 'id')),
             'errors' => [],
         ]);
     }
@@ -32,6 +34,8 @@ class OnboardingController
             'steps' => (new FormRepository())->activeSteps(),
             'goals' => (new GoalRepository())->active(),
             'cities' => (new LocationRepository())->activeCities(),
+            'existingAnswers' => (new \App\Repositories\AnswerRepository())->existingForUser((int)$user['id']),
+            'selectedGoalIds' => array_map('intval', $_POST['goals'] ?? []),
             'errors' => $errors,
         ]);
     }

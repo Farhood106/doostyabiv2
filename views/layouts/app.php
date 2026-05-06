@@ -12,7 +12,7 @@
     <a class="brand" href="/">Doostyabi</a>
     <nav>
         <?php if ($user): ?>
-            <?php if (($user['role_name'] ?? '') === 'admin'): ?><a href="/admin">Admin</a><a href="/admin/forms">Forms</a><a href="/admin/users">Users</a><?php else: ?><a href="/onboarding">Onboarding</a><?php endif; ?>
+            <?php if (($user['role_name'] ?? '') === 'admin'): ?><a href="/admin">Admin</a><a href="/admin/forms">Forms</a><a href="/admin/catalogs">Catalogs</a><a href="/admin/users">Users</a><a href="/admin/health">Health</a><?php else: ?><a href="/onboarding">Onboarding</a><?php endif; ?>
             <form method="post" action="/logout" class="inline"><?= csrf_field() ?><button>Logout</button></form>
         <?php else: ?>
             <a href="/login">Login</a><a href="/register">Register</a>

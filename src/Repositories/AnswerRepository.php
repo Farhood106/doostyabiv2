@@ -41,6 +41,27 @@ class AnswerRepository
         $this->db->commit();
     }
 
+    public function existingForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM user_answers WHERE user_id=?');
+        $stmt->execute([$userId]);
+        $answers = [];
+        foreach ($stmt->fetchAll() as $answer) {
+            $id = (int)$answer['id'];
+            $answer['option_ids'] = $this->idsFor('user_answer_options', 'question_option_id', $id);
+            $answer['city_ids'] = $this->idsFor('user_answer_cities', 'city_id', $id);
+            $answers[(int)$answer['question_id']] = $answer;
+        }
+        return $answers;
+    }
+
+    private function idsFor(string $table, string $column, int $answerId): array
+    {
+        $stmt = $this->db->prepare("SELECT $column FROM $table WHERE user_answer_id=?");
+        $stmt->execute([$answerId]);
+        return array_map('intval', array_column($stmt->fetchAll(), $column));
+    }
+
     public function readableForUser(int $userId): array
     {
         $stmt = $this->db->prepare("SELECT q.title, q.answer_type, ua.answer_text, ua.answer_number, ua.answer_boolean, ua.answer_date,
@@ -59,7 +80,6 @@ class AnswerRepository
         $stmt->execute([$userId]);
         return $stmt->fetchAll();
     }
-
     public function updateProgress(int $userId, ?int $currentStepId, int $completedSteps, bool $complete): void
     {
         $stmt = $this->db->prepare('INSERT INTO user_onboarding_progress (user_id,current_step_id,completed_steps,is_complete) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE current_step_id=VALUES(current_step_id), completed_steps=VALUES(completed_steps), is_complete=VALUES(is_complete)');

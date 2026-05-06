@@ -22,13 +22,26 @@ class Auth
         return $user;
     }
 
-    public static function requireAdmin(): array
+    public static function hasPermission(array $user, string $permission): bool
+    {
+        if (($user['role_name'] ?? '') !== 'admin') {
+            return false;
+        }
+        return in_array($permission, (new UserRepository())->permissionsForUser((int)$user['id']), true);
+    }
+
+    public static function requirePermission(string $permission): array
     {
         $user = self::requireLogin();
-        if (($user['role_name'] ?? '') !== 'admin') {
+        if (!self::hasPermission($user, $permission)) {
             http_response_code(403);
             exit('Forbidden');
         }
         return $user;
+    }
+
+    public static function requireAdmin(): array
+    {
+        return self::requirePermission('admin.access');
     }
 }

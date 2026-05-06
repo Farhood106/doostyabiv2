@@ -14,6 +14,13 @@ spl_autoload_register(function (string $class): void {
 require __DIR__ . '/Core/Helpers.php';
 
 $configFile = dirname(__DIR__) . '/config.php';
-$config = file_exists($configFile) ? require $configFile : require dirname(__DIR__) . '/config.example.php';
-session_name($config['app']['session_name'] ?? 'doostyabi_session');
+if (!file_exists($configFile)) {
+    http_response_code(503);
+    require dirname(__DIR__) . '/views/setup.php';
+    exit;
+}
+
+$GLOBALS['app_config'] = require $configFile;
+$sessionName = $GLOBALS['app_config']['app']['session_name'] ?? 'doostyabi_session';
+session_name($sessionName);
 session_start();

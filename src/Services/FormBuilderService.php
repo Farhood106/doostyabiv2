@@ -14,6 +14,8 @@ class FormBuilderService
         if (empty($input['question_group_id'])) { $errors['question_group_id'] = 'Group is required.'; }
         if (trim($input['title'] ?? '') === '') { $errors['title'] = 'Title is required.'; }
         if (!in_array($input['answer_type'] ?? '', self::TYPES, true)) { $errors['answer_type'] = 'Invalid answer type.'; }
+        if (!in_array($input['visibility_scope'] ?? 'private', ['private','matches','admins','public'], true)) { $errors['visibility_scope'] = 'Invalid visibility scope.'; }
+        if (!in_array($input['privacy_level'] ?? 'medium', ['low','medium','high'], true)) { $errors['privacy_level'] = 'Invalid privacy level.'; }
         if ($errors) { return [false, $errors, null]; }
         $type = $input['answer_type'];
         $data = [

@@ -28,7 +28,7 @@ function verify_csrf(): void
     $token = $_POST['_csrf'] ?? '';
     if (!hash_equals($_SESSION['_csrf'] ?? '', $token)) {
         http_response_code(419);
-        exit('Invalid CSRF token.');
+        exit('Your session security token is invalid or expired. Please go back, refresh the page, and try again.');
     }
 }
 
