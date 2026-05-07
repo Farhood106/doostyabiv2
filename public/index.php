@@ -5,6 +5,7 @@ use App\Core\Router;
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
+use App\Controllers\MatchController;
 use App\Controllers\OnboardingController;
 
 $router = new Router();
@@ -14,6 +15,8 @@ $router->post('/login', [AuthController::class, 'login']);
 $router->get('/register', [AuthController::class, 'showRegister']);
 $router->post('/register', [AuthController::class, 'register']);
 $router->post('/logout', [AuthController::class, 'logout']);
+$router->get('/matches', [MatchController::class, 'index']);
+$router->post('/matches/action', [MatchController::class, 'action']);
 $router->get('/onboarding', [OnboardingController::class, 'show']);
 $router->post('/onboarding', [OnboardingController::class, 'save']);
 $router->get('/admin', [AdminController::class, 'dashboard']);
@@ -32,6 +35,8 @@ $router->post('/admin/catalogs/provinces/delete', [AdminController::class, 'dele
 $router->post('/admin/catalogs/cities', [AdminController::class, 'saveCity']);
 $router->post('/admin/catalogs/cities/delete', [AdminController::class, 'deleteCity']);
 $router->get('/admin/health', [AdminController::class, 'health']);
+$router->get('/admin/matches', [AdminController::class, 'matches']);
+$router->post('/admin/matches/run', [AdminController::class, 'runMatching']);
 $router->get('/admin/settings', [AdminController::class, 'settings']);
 $router->post('/admin/settings', [AdminController::class, 'saveSettings']);
 $router->get('/admin/users', [AdminController::class, 'users']);

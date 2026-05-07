@@ -18,6 +18,7 @@ class DashboardRepository
             'steps' => (int)$this->db->query('SELECT COUNT(*) FROM form_steps WHERE deleted_at IS NULL')->fetchColumn(),
             'questions' => (int)$this->db->query('SELECT COUNT(*) FROM questions WHERE deleted_at IS NULL')->fetchColumn(),
             'completed_onboardings' => (int)$this->db->query('SELECT COUNT(*) FROM user_onboarding_progress WHERE is_complete=1')->fetchColumn(),
+            'matches' => (int)$this->db->query('SELECT COUNT(*) FROM matches')->fetchColumn(),
         ];
     }
 }

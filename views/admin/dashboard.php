@@ -1,6 +1,6 @@
 <section class="section-title"><div><h1>Admin dashboard</h1><p class="muted">Manage the Phase 2 foundation before matching features are added.</p></div><span class="pill"><?= e($settings['site_status'] ?? 'active') ?></span></section>
 <div class="grid six">
-    <?php foreach ([['Users','users','/admin/users'],['Goals','goals','/admin/catalogs'],['Cities','cities','/admin/catalogs'],['Form steps','steps','/admin/forms'],['Questions','questions','/admin/forms'],['Completed','completed_onboardings','/admin/users']] as $card): ?>
+    <?php foreach ([['Users','users','/admin/users'],['Goals','goals','/admin/catalogs'],['Cities','cities','/admin/catalogs'],['Form steps','steps','/admin/forms'],['Questions','questions','/admin/forms'],['Completed','completed_onboardings','/admin/users'],['Matches','matches','/admin/matches']] as $card): ?>
         <a class="card stat-card" href="<?= e($card[2]) ?>"><strong><?= e($card[0]) ?></strong><p class="metric"><?= (int)($stats[$card[1]] ?? 0) ?></p></a>
     <?php endforeach; ?>
 </div>

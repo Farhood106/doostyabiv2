@@ -13,7 +13,9 @@ use App\Repositories\LocationRepository;
 use App\Repositories\UserRepository;
 use App\Services\AdminCatalogService;
 use App\Services\AdminSettingsService;
+use App\Repositories\MatchRepository;
 use App\Services\FormBuilderService;
+use App\Services\MatchService;
 use App\Services\SystemHealthService;
 
 class AdminController
@@ -127,6 +129,31 @@ class AdminController
         View::render('admin/user_detail', ['profile' => $user, 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
     }
 
+
+    public function matches(): void
+    {
+        Auth::requireAdmin();
+        $repo = new MatchRepository();
+        $selectedMatchId = (int)($_GET['match_id'] ?? 0);
+        View::render('admin/matches', [
+            'matches' => $repo->allMatches(),
+            'scores' => $selectedMatchId ? $repo->scoresForMatch($selectedMatchId) : [],
+            'explanation' => $selectedMatchId ? $repo->explanationForMatch($selectedMatchId) : null,
+            'selectedMatchId' => $selectedMatchId,
+            'users' => (new UserRepository())->allMembers(),
+        ]);
+    }
+    public function runMatching(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        $userId = (int)($_POST['user_id'] ?? 0);
+        if ($userId > 0) {
+            $count = (new MatchService())->runForUser($userId, !empty($_POST['recalculate']), 25);
+            \flash('success', 'Generated or updated ' . $count . ' match recommendations.');
+        }
+        \redirect('/admin/matches');
+    }
     public function settings(): void
     {
         Auth::requireAdmin();

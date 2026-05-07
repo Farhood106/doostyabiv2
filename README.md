@@ -14,9 +14,11 @@ public/index.php
 public/install/_common.php
 public/install/check.php
 public/install/verify_schema.php
+scripts/run_matching.php
 src/Controllers/AdminController.php
 src/Controllers/AuthController.php
 src/Controllers/HomeController.php
+src/Controllers/MatchController.php
 src/Controllers/OnboardingController.php
 src/Core/Auth.php
 src/Core/Database.php
@@ -31,11 +33,15 @@ src/Repositories/DashboardRepository.php
 src/Repositories/FormRepository.php
 src/Repositories/GoalRepository.php
 src/Repositories/LocationRepository.php
+src/Repositories/MatchRepository.php
 src/Repositories/UserRepository.php
 src/Services/AdminCatalogService.php
 src/Services/AdminSettingsService.php
 src/Services/AuthService.php
 src/Services/FormBuilderService.php
+src/Services/MatchCardService.php
+src/Services/MatchScoringService.php
+src/Services/MatchService.php
 src/Services/OnboardingService.php
 src/Services/SystemHealthService.php
 src/bootstrap.php
@@ -44,6 +50,7 @@ views/admin/catalogs.php
 views/admin/dashboard.php
 views/admin/form_builder.php
 views/admin/health.php
+views/admin/matches.php
 views/admin/settings.php
 views/admin/user_detail.php
 views/admin/users.php
@@ -51,6 +58,7 @@ views/auth/login.php
 views/auth/register.php
 views/home.php
 views/layouts/app.php
+views/matches/index.php
 views/onboarding/form.php
 views/setup.php
 ```
@@ -137,7 +145,47 @@ Change this password immediately after first login in a real deployment.
 - Confirm answers are saved into `user_answers`, `user_answer_options`, and `user_answer_cities` based on answer type.
 - Confirm `user_onboarding_progress` marks onboarding complete.
 - As admin, open `/admin/users`, then a user detail page, and confirm profile summary, goals, onboarding status, grouped answers, privacy level, and matchable status render correctly.
+- As admin, open `/admin/matches`, run matching for a user, and confirm scores/explanations appear.
+- As a member, open `/matches` and confirm cards are anonymous and interested/pass actions save.
+- Confirm mutual status is set only after both users choose Interested.
 - Confirm page output escapes user-provided text by entering characters such as `<script>` in text answers.
+
+
+## Basic matching engine (Phase 3)
+
+The Phase 3 matching engine is intentionally simple, explainable, and privacy-first:
+
+- Candidates must be active member users, cannot be the viewer, and must share at least one active goal.
+- Existing match pairs are skipped unless an admin chooses recalculation.
+- Location fit uses city answers from `city_single` and `city_multi` questions when those answers exist.
+- Matchable dynamic questions are controlled by admins with `is_matchable`, `match_weight`, and `match_rule`.
+- Choice/select questions score by exact match or overlap depending on answer type.
+- Boolean and single-choice/select questions use exact matching.
+- Range questions use simple overlap compatibility.
+- Scale/number questions use numeric closeness.
+- `match_rule = hard_filter` rejects candidates when the comparable answer score is too low.
+- Scores are saved into `match_scores` as `goal_fit`, `location_fit`, `answer_fit`, `boundary_fit`, `confidence`, and `penalty`.
+- Human-readable reasons are saved in `match_explanations`.
+- Anonymous `match_cards` are generated per viewer and do not expose names, email addresses, contact info, or private/admin-only answers.
+
+### Admin matching workflow
+
+1. In **Form Builder**, mark only safe compatibility questions as matchable.
+2. Set `match_weight` higher for important soft-scored questions.
+3. Use `match_rule = hard_filter` only for true boundaries that should reject incompatible candidates.
+4. Ask users to complete onboarding with goals, cities, and matchable answers.
+5. Open **Admin → Matches**, choose a user, and run matching.
+6. Review saved score breakdowns and explanations before enabling broader use.
+
+### Shared-hosting cron command
+
+Run matching in small batches from cPanel Cron Jobs or SSH:
+
+```bash
+php /home/YOUR_CPANEL_USER/doostyabi/scripts/run_matching.php --limit=20
+```
+
+Use small limits on shared hosting. This script is not a daemon and exits after one batch.
 
 ## Production deployment checklist for shared hosting
 

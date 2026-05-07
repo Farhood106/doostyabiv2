@@ -207,3 +207,93 @@ CREATE TABLE IF NOT EXISTS admin_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_recommendation_queue (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    status ENUM('pending','processing','done','failed') NOT NULL DEFAULT 'pending',
+    attempts INT NOT NULL DEFAULT 0,
+    last_error TEXT NULL,
+    run_after DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_match_queue_status (status, run_after, id),
+    UNIQUE KEY uq_match_queue_user_status (user_id, status),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS matches (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_one_id INT NOT NULL,
+    user_two_id INT NOT NULL,
+    match_status ENUM('suggested','mutual','passed','archived') NOT NULL DEFAULT 'suggested',
+    compatibility_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    confidence_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    generated_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_matches_pair (user_one_id, user_two_id),
+    INDEX idx_matches_user_one (user_one_id, match_status),
+    INDEX idx_matches_user_two (user_two_id, match_status),
+    FOREIGN KEY (user_one_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_two_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_scores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    score_type ENUM('goal_fit','location_fit','answer_fit','boundary_fit','confidence','penalty') NOT NULL,
+    score_value DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    weight DECIMAL(6,2) NOT NULL DEFAULT 1.00,
+    details TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_match_scores_match (match_id, score_type),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_explanations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    why_matched TEXT NULL,
+    strongest_points TEXT NULL,
+    caution_points TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_match_explanations_match (match_id),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_cards (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    viewer_user_id INT NOT NULL,
+    target_user_id INT NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    summary TEXT NULL,
+    strengths_text TEXT NULL,
+    cautions_text TEXT NULL,
+    compatibility_label VARCHAR(80) NOT NULL,
+    privacy_level VARCHAR(40) NOT NULL DEFAULT 'anonymous',
+    generated_payload_json LONGTEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_match_cards_viewer (match_id, viewer_user_id),
+    INDEX idx_match_cards_viewer (viewer_user_id, privacy_level),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_actions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    actor_user_id INT NOT NULL,
+    target_user_id INT NOT NULL,
+    action ENUM('interested','pass') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_match_actions_actor (match_id, actor_user_id),
+    INDEX idx_match_actions_target (target_user_id, action),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
