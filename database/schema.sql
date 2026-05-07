@@ -255,6 +255,60 @@ CREATE TABLE IF NOT EXISTS matches (
     FOREIGN KEY (user_two_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE IF NOT EXISTS chats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    status ENUM('open','closed') NOT NULL DEFAULT 'open',
+    closed_reason TEXT NULL,
+    closed_by_admin_user_id INT NULL,
+    closed_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_chats_match (match_id),
+    INDEX idx_chats_status_updated (status, updated_at),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    FOREIGN KEY (closed_by_admin_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS chat_participants (
+    chat_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    last_read_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (chat_id, user_id),
+    INDEX idx_chat_participants_user (user_id, chat_id),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    chat_id BIGINT NOT NULL,
+    sender_user_id INT NOT NULL,
+    body TEXT NOT NULL,
+    moderation_status ENUM('visible','flagged','hidden') NOT NULL DEFAULT 'visible',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    INDEX idx_messages_chat_created (chat_id, created_at, id),
+    INDEX idx_messages_sender (sender_user_id, created_at),
+    INDEX idx_messages_moderation (moderation_status, created_at),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS message_flags (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    reporter_user_id INT NOT NULL,
+    reason_text TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_message_flags_reporter (message_id, reporter_user_id),
+    INDEX idx_message_flags_reporter (reporter_user_id, created_at),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS match_scores (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     match_id BIGINT NOT NULL,

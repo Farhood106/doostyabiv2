@@ -16,7 +16,7 @@
         <button class="secondary" name="action" value="block" onclick="return confirm('Block this anonymous profile?')">Block</button>
     </form>
     <?php if (($card['viewer_action'] ?? '') === 'interested'): ?><p class="pill">You marked Interested.</p><?php endif; ?>
-    <?php if ($card['match_status'] === 'mutual'): ?><p class="pill">Mutual interest saved. Chat is not enabled yet.</p><?php endif; ?>
+    <?php if ($card['match_status'] === 'mutual'): ?><p class="pill">Mutual interest saved. <a href="/chats">Open chats</a>.</p><?php endif; ?>
 </section>
 <?php endforeach; ?>
 </div>

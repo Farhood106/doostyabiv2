@@ -112,11 +112,19 @@ class MatchRepository
         if (!$targetId || !in_array($action, ['interested','pass','block'], true)) { return; }
         $stmt = $this->db->prepare('INSERT INTO match_actions (match_id, actor_user_id, target_user_id, action) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE action=VALUES(action), created_at=CURRENT_TIMESTAMP');
         $stmt->execute([$matchId, $actorId, $targetId, $action]);
-        if ($action === 'block') { $this->blockUser($actorId, $targetId, 'Blocked from match card', 'match_card'); $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE id=?")->execute([$matchId]); return; }
-        if ($action === 'pass') { $this->db->prepare("UPDATE matches SET match_status='passed' WHERE id=?")->execute([$matchId]); return; }
+        if ($action === 'block') {
+            $this->blockUser($actorId, $targetId, 'Blocked from match card', 'match_card');
+            $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE id=?")->execute([$matchId]);
+            (new ChatRepository())->closeForBlockedMatch($matchId, 'Closed automatically because the match was blocked.');
+            return;
+        }
+        if ($action === 'pass') { $this->db->prepare("UPDATE matches SET match_status='passed' WHERE id=? AND match_status<>'mutual'")->execute([$matchId]); return; }
         $check = $this->db->prepare("SELECT COUNT(*) FROM match_actions WHERE match_id=? AND action='interested'");
         $check->execute([$matchId]);
-        if ((int)$check->fetchColumn() >= 2) { $this->db->prepare("UPDATE matches SET match_status='mutual' WHERE id=?")->execute([$matchId]); }
+        if ((int)$check->fetchColumn() >= 2) {
+            $this->db->prepare("UPDATE matches SET match_status='mutual' WHERE id=? AND match_status<>'blocked'")->execute([$matchId]);
+            (new ChatRepository())->ensureForMutualMatch($matchId);
+        }
     }
 
     public function targetForActor(int $matchId, int $actorId): ?int
@@ -135,7 +143,11 @@ class MatchRepository
         $stmt = $this->db->prepare('INSERT INTO blocks (blocker_user_id, blocked_user_id, reason_text, source) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE reason_text=VALUES(reason_text), source=VALUES(source), deleted_at=NULL');
         $stmt->execute([$blockerId, $blockedId, $reason, $source]);
         $one = min($blockerId, $blockedId); $two = max($blockerId, $blockedId);
+        $stmt = $this->db->prepare("SELECT id FROM matches WHERE user_one_id=? AND user_two_id=? LIMIT 1");
+        $stmt->execute([$one, $two]);
+        $matchId = (int)($stmt->fetchColumn() ?: 0);
         $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE user_one_id=? AND user_two_id=?")->execute([$one, $two]);
+        if ($matchId > 0) { (new ChatRepository())->closeForBlockedMatch($matchId, 'Closed automatically because one participant blocked the other.'); }
     }
 
     public function blockedPairs(): array

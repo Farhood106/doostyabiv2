@@ -18,6 +18,7 @@ public/install/verify_schema.php
 scripts/run_matching.php
 src/Controllers/AdminController.php
 src/Controllers/AuthController.php
+src/Controllers/ChatController.php
 src/Controllers/HomeController.php
 src/Controllers/MatchController.php
 src/Controllers/OnboardingController.php
@@ -30,6 +31,7 @@ src/Core/View.php
 src/Repositories/AdminSettingsRepository.php
 src/Repositories/AnswerRepository.php
 src/Repositories/AuditLogRepository.php
+src/Repositories/ChatRepository.php
 src/Repositories/DashboardRepository.php
 src/Repositories/FormRepository.php
 src/Repositories/GoalRepository.php
@@ -48,6 +50,8 @@ src/Services/SystemHealthService.php
 src/bootstrap.php
 storage/logs/.gitkeep
 views/admin/catalogs.php
+views/admin/chat_detail.php
+views/admin/chats.php
 views/admin/dashboard.php
 views/admin/form_builder.php
 views/admin/health.php
@@ -57,6 +61,8 @@ views/admin/user_detail.php
 views/admin/users.php
 views/auth/login.php
 views/auth/register.php
+views/chats/index.php
+views/chats/show.php
 views/home.php
 views/layouts/app.php
 views/matches/index.php
@@ -90,7 +96,7 @@ views/setup.php
 6. Open phpMyAdmin, select the new database, use **Import**, and import `database/schema.sql` first.
 7. In phpMyAdmin, import `database/seeds.sql` second.
 8. Visit `/install/check.php?token=YOUR_TEMP_TOKEN` to verify PHP extensions, config loading, database connectivity, writable folders, and table existence.
-9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, the default admin account, default password hash verification, and core seed records.
+9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, chat/moderation columns, the default admin account, default password hash verification, and core seed records.
 10. Visit `/install/smoke_matching.php?token=YOUR_TEMP_TOKEN` after imports to create safe smoke users and verify the matching service can create a card.
 11. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
 12. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
@@ -149,9 +155,9 @@ Change this password immediately after first login in a real deployment.
 - As admin, open `/admin/users`, then a user detail page, and confirm profile summary, goals, onboarding status, grouped answers, privacy level, and matchable status render correctly.
 - As admin, open `/admin/matches`, run matching for a user, and confirm scores/explanations appear.
 - As a member, open `/matches` and confirm cards are anonymous and interested/pass actions save.
-- Confirm mutual status is set only after both users choose Interested.
-- Block a card and confirm it disappears, `blocks` has a row, and the match status becomes `blocked`.
-- As admin, reset a match, clear actions, recalculate a match, and review blocked pairs.
+- Confirm mutual status is set only after both users choose Interested, and then `/chats` shows a new anonymous conversation for both users.
+- Block a card and confirm it disappears, `blocks` has a row, the match status becomes `blocked`, and any related chat becomes read-only/closed.
+- As admin, reset a match, clear actions, recalculate a match, review blocked pairs, review chat messages from `/admin/chats`, and close a chat with a reason.
 - Confirm page output escapes user-provided text by entering characters such as `<script>` in text answers.
 
 
@@ -187,10 +193,48 @@ The Phase 3 matching engine is intentionally simple, explainable, and privacy-fi
 - Members can choose **Interested**, **Pass**, or **Block** from an anonymous card.
 - A pass hides that card for the acting member and marks the match as passed unless an admin resets it.
 - Interested is idempotent; clicking it again will not create duplicate action rows.
-- A mutual status is set only after both users choose Interested.
-- Block creates a `blocks` row, stores a `match_actions` row with `block`, updates the match to `blocked`, and hides cards for both directions.
+- A mutual status is set only after both users choose Interested. When this happens, the app automatically creates one chat and two `chat_participants` rows for the matched pair.
+- Block creates a `blocks` row, stores a `match_actions` row with `block`, updates the match to `blocked`, hides cards for both directions, and closes/disables any related chat.
 - Matching candidate selection excludes both directions of active blocks.
 - Admins can reset a match, optionally clear actions, recalculate a pair, and review blocked pairs from **Admin → Matches**.
+
+
+## Secure chat after mutual match (Phase 4)
+
+Phase 4 adds privacy-preserving text chat for mutual matches only:
+
+- `chats` stores one conversation per mutual match, including `open`/`closed` status and admin close reason fields.
+- `chat_participants` limits each chat to the two matched members. User chat reads, sends, and flags all verify participant membership.
+- `messages` stores text-only messages. Attachments are intentionally not implemented.
+- `message_flags` stores member reports for moderation review. Flagged messages remain visible but are marked with `moderation_status = flagged`.
+- Chat creation is automatic when the second member chooses **Interested** and the match becomes `mutual`.
+- `/chats` lists the signed-in member's anonymous conversations. `/chats/{id}` shows a conversation and a CSRF-protected text send form only while the chat is open and the match remains mutual.
+- Blocking a match updates the match to `blocked` and closes/disables its chat so no further messages can be sent.
+- `/admin/chats` lists chats with message/flag counts. `/admin/chats/{id}` lets admins review messages and close a chat with a required reason.
+
+Privacy boundaries for this phase:
+
+- Chat UI does not show email addresses, contact details, private profile data, public profiles, or reveal requests.
+- Members are shown as anonymous matches in user-facing chat screens.
+- All output is escaped before rendering.
+
+### Manual chat test checklist
+
+1. Create or use two member accounts with anonymous match cards.
+2. As member A, choose **Interested** on member B's card; verify no chat appears yet unless member B already chose Interested.
+3. As member B, choose **Interested** on the reciprocal card; verify the match becomes `mutual` and `/chats` appears for both users.
+4. Open `/chats/{id}` as each participant and send a text message; verify CSRF-protected forms save and output is escaped.
+5. Try opening the chat as a third member; verify access is denied/not found.
+6. Flag the other participant's message and verify `/admin/chats/{id}` shows the flag count/reason.
+7. As admin, close the chat with a reason; verify members can still read but cannot send.
+8. Create another mutual chat, then block the match; verify the chat becomes disabled/read-only.
+9. Confirm there are no attachment controls, reveal request controls, public profile links, email addresses, or contact details in member chat screens.
+
+### Known chat limitations
+
+- No attachments, typing indicators, read receipts UI, realtime updates, reveal requests, or public profiles.
+- Moderation is review-oriented only: users can flag messages and admins can close chats, but there is no automated abuse classifier or message hiding workflow yet.
+- Chat history is not encrypted at the application layer; rely on HTTPS in production and database/server access controls.
 
 ### Matching smoke test
 

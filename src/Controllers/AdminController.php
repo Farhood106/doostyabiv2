@@ -14,6 +14,7 @@ use App\Repositories\UserRepository;
 use App\Services\AdminCatalogService;
 use App\Services\AdminSettingsService;
 use App\Repositories\MatchRepository;
+use App\Repositories\ChatRepository;
 use App\Services\FormBuilderService;
 use App\Services\MatchService;
 use App\Services\SystemHealthService;
@@ -166,7 +167,7 @@ class AdminController
             \flash('success', 'Match reset.');
         }
 
-edirect('/admin/matches');
+        \redirect('/admin/matches');
     }
     public function recalculateMatch(): void
     {
@@ -179,8 +180,33 @@ edirect('/admin/matches');
             \flash('success', 'Match pair recalculated.');
         }
 
-edirect('/admin/matches');
+        \redirect('/admin/matches');
     }
+
+    public function chats(): void
+    {
+        Auth::requireAdmin();
+        View::render('admin/chats', ['chats' => (new ChatRepository())->allForAdmin()]);
+    }
+
+    public function chatDetail(int $id): void
+    {
+        Auth::requireAdmin();
+        $repo = new ChatRepository();
+        $chat = $repo->findForAdmin($id);
+        if (!$chat) { http_response_code(404); exit('Chat not found'); }
+        View::render('admin/chat_detail', ['chat' => $chat, 'messages' => $repo->messagesForAdmin($id)]);
+    }
+
+    public function closeChat(int $id): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        $closed = (new ChatRepository())->closeByAdmin($id, (int)$admin['id'], (string)($_POST['reason'] ?? ''));
+        \flash($closed ? 'success' : 'error', $closed ? 'Chat closed.' : 'Provide a close reason before closing chat.');
+        \redirect('/admin/chats/' . $id);
+    }
+
     public function settings(): void
     {
         Auth::requireAdmin();

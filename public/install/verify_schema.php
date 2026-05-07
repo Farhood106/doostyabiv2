@@ -36,6 +36,21 @@ if (!$missing) {
         $checks[] = install_check('Default admin password verification', $matchesDefault ? 'pass' : 'warn', $matchesDefault ? 'Seeded password works; change it after first login.' : 'Stored admin password does not match the seed default, which is expected if it was changed.');
     }
 
+
+
+    $chatColumnChecks = [
+        'chats.status' => "SHOW COLUMNS FROM chats LIKE 'status'",
+        'chats.closed_reason' => "SHOW COLUMNS FROM chats LIKE 'closed_reason'",
+        'messages.body' => "SHOW COLUMNS FROM messages LIKE 'body'",
+        'messages.moderation_status' => "SHOW COLUMNS FROM messages LIKE 'moderation_status'",
+        'chat_participants.user_id' => "SHOW COLUMNS FROM chat_participants LIKE 'user_id'",
+    ];
+    foreach ($chatColumnChecks as $label => $sql) {
+        $stmt = $pdo->query($sql);
+        $found = (bool)$stmt->fetch();
+        $checks[] = install_check('Chat schema column: ' . $label, $found ? 'pass' : 'fail', $found ? 'Column found.' : 'Missing column.');
+    }
+
     $seedChecks = [
         'roles' => "SELECT COUNT(*) FROM roles WHERE name IN ('admin','user')",
         'permissions' => "SELECT COUNT(*) FROM permissions WHERE name IN ('admin.access','forms.manage','users.view','onboarding.complete')",

@@ -17,7 +17,7 @@ function nav_active(string $path, string $currentPath): string { return strpos($
     <a class="brand" href="/">Doostyabi</a>
     <nav>
         <?php if ($user): ?>
-            <?php if (!$isAdmin): ?><a href="/onboarding">Onboarding</a><a href="/matches">Matches</a><?php endif; ?>
+            <?php if (!$isAdmin): ?><a href="/onboarding">Onboarding</a><a href="/matches">Matches</a><a href="/chats">Chats</a><?php endif; ?>
             <form method="post" action="/logout" class="inline"><?= csrf_field() ?><button>Logout</button></form>
         <?php else: ?>
             <a href="/login">Login</a><a href="/register">Register</a>
@@ -27,7 +27,7 @@ function nav_active(string $path, string $currentPath): string { return strpos($
 <?php if ($isAdmin): ?>
 <aside class="admin-sidebar">
     <div class="nav-group"><span>Overview</span><a class="<?= $currentPath === '/admin' ? 'active' : '' ?>" href="/admin">Dashboard</a></div>
-    <div class="nav-group"><span>People</span><a class="<?= nav_active('/admin/users', $currentPath) ?>" href="/admin/users">Users</a><a class="<?= nav_active('/admin/matches', $currentPath) ?>" href="/admin/matches">Matches</a></div>
+    <div class="nav-group"><span>People</span><a class="<?= nav_active('/admin/users', $currentPath) ?>" href="/admin/users">Users</a><a class="<?= nav_active('/admin/matches', $currentPath) ?>" href="/admin/matches">Matches</a><a class="<?= nav_active('/admin/chats', $currentPath) ?>" href="/admin/chats">Chats</a></div>
     <div class="nav-group"><span>Catalogs</span><a class="<?= nav_active('/admin/catalogs', $currentPath) ?>" href="/admin/catalogs">Goals, Provinces, Cities</a></div>
     <div class="nav-group"><span>Form Builder</span><a class="<?= nav_active('/admin/forms', $currentPath) ?>" href="/admin/forms">Steps, Groups, Questions</a></div>
     <div class="nav-group"><span>System</span><a class="<?= nav_active('/admin/health', $currentPath) ?>" href="/admin/health">Health</a><a class="<?= nav_active('/admin/settings', $currentPath) ?>" href="/admin/settings">Settings</a></div>
