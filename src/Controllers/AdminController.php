@@ -3,13 +3,16 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\View;
+use App\Repositories\AdminSettingsRepository;
 use App\Repositories\AnswerRepository;
 use App\Repositories\AuditLogRepository;
+use App\Repositories\DashboardRepository;
 use App\Repositories\FormRepository;
 use App\Repositories\GoalRepository;
 use App\Repositories\LocationRepository;
 use App\Repositories\UserRepository;
 use App\Services\AdminCatalogService;
+use App\Services\AdminSettingsService;
 use App\Services\FormBuilderService;
 use App\Services\SystemHealthService;
 
@@ -18,7 +21,7 @@ class AdminController
     public function dashboard(): void
     {
         Auth::requireAdmin();
-        View::render('admin/dashboard', ['questions' => (new FormRepository())->allQuestions(), 'users' => (new UserRepository())->allMembers()]);
+        View::render('admin/dashboard', ['stats' => (new DashboardRepository())->stats(), 'settings' => (new AdminSettingsRepository())->all()]);
     }
     public function formBuilder(): void
     {
@@ -121,7 +124,21 @@ class AdminController
         $id = (int)($_GET['id'] ?? 0);
         $user = (new UserRepository())->find($id);
         if (!$user) { http_response_code(404); exit('User not found'); }
-        View::render('admin/user_detail', ['profile' => $user, 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new AnswerRepository())->readableForUser($id)]);
+        View::render('admin/user_detail', ['profile' => $user, 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
+    }
+
+    public function settings(): void
+    {
+        Auth::requireAdmin();
+        View::render('admin/settings', ['settings' => (new AdminSettingsRepository())->all(), 'errors' => []]);
+    }
+    public function saveSettings(): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        [$ok, $errors] = (new AdminSettingsService())->save($_POST, (int)$admin['id']);
+        if ($ok) { (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'admin_settings', null); \flash('success', 'Settings saved.'); \redirect('/admin/settings'); }
+        View::render('admin/settings', ['settings' => $_POST, 'errors' => $errors]);
     }
     public function health(): void
     {

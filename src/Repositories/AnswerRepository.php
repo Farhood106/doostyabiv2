@@ -80,6 +80,14 @@ class AnswerRepository
         $stmt->execute([$userId]);
         return $stmt->fetchAll();
     }
+
+    public function progressForUser(int $userId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM user_onboarding_progress WHERE user_id=? LIMIT 1');
+        $stmt->execute([$userId]);
+        return $stmt->fetch() ?: null;
+    }
+
     public function updateProgress(int $userId, ?int $currentStepId, int $completedSteps, bool $complete): void
     {
         $stmt = $this->db->prepare('INSERT INTO user_onboarding_progress (user_id,current_step_id,completed_steps,is_complete) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE current_step_id=VALUES(current_step_id), completed_steps=VALUES(completed_steps), is_complete=VALUES(is_complete)');

@@ -132,6 +132,7 @@ CREATE TABLE IF NOT EXISTS question_options (
     question_id INT NOT NULL,
     label VARCHAR(180) NOT NULL,
     value VARCHAR(180) NOT NULL,
+    description TEXT NULL,
     sort_order INT NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     deleted_at DATETIME NULL,
@@ -196,4 +197,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_audit_entity (entity_type, entity_id),
     INDEX idx_audit_admin_created (admin_user_id, created_at),
     FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS admin_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

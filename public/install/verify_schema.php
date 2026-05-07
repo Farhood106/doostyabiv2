@@ -46,6 +46,7 @@ if (!$missing) {
         'question groups' => 'SELECT COUNT(*) FROM question_groups WHERE deleted_at IS NULL',
         'questions' => 'SELECT COUNT(*) FROM questions WHERE deleted_at IS NULL',
         'question options' => 'SELECT COUNT(*) FROM question_options WHERE deleted_at IS NULL',
+        'admin settings' => 'SELECT COUNT(*) FROM admin_settings',
     ];
     foreach ($seedChecks as $label => $sql) {
         $count = (int)$pdo->query($sql)->fetchColumn();

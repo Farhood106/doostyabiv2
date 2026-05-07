@@ -32,6 +32,8 @@ $router->post('/admin/catalogs/provinces/delete', [AdminController::class, 'dele
 $router->post('/admin/catalogs/cities', [AdminController::class, 'saveCity']);
 $router->post('/admin/catalogs/cities/delete', [AdminController::class, 'deleteCity']);
 $router->get('/admin/health', [AdminController::class, 'health']);
+$router->get('/admin/settings', [AdminController::class, 'settings']);
+$router->post('/admin/settings', [AdminController::class, 'saveSettings']);
 $router->get('/admin/users', [AdminController::class, 'users']);
 $router->get('/admin/users/show', [AdminController::class, 'userDetail']);
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

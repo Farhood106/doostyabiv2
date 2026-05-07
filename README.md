@@ -9,46 +9,50 @@ A privacy-first, compatibility-based relationship/matching platform built with s
 config.example.php
 database/schema.sql
 database/seeds.sql
+public/assets/style.css
+public/index.php
 public/install/_common.php
 public/install/check.php
 public/install/verify_schema.php
-public/index.php
-public/assets/style.css
-src/bootstrap.php
+src/Controllers/AdminController.php
+src/Controllers/AuthController.php
+src/Controllers/HomeController.php
+src/Controllers/OnboardingController.php
 src/Core/Auth.php
 src/Core/Database.php
 src/Core/Helpers.php
 src/Core/Router.php
 src/Core/SetupException.php
 src/Core/View.php
-src/Controllers/AdminController.php
-src/Controllers/AuthController.php
-src/Controllers/HomeController.php
-src/Controllers/OnboardingController.php
+src/Repositories/AdminSettingsRepository.php
 src/Repositories/AnswerRepository.php
 src/Repositories/AuditLogRepository.php
+src/Repositories/DashboardRepository.php
 src/Repositories/FormRepository.php
 src/Repositories/GoalRepository.php
 src/Repositories/LocationRepository.php
 src/Repositories/UserRepository.php
 src/Services/AdminCatalogService.php
+src/Services/AdminSettingsService.php
 src/Services/AuthService.php
 src/Services/FormBuilderService.php
 src/Services/OnboardingService.php
 src/Services/SystemHealthService.php
+src/bootstrap.php
 storage/logs/.gitkeep
-views/setup.php
-views/layouts/app.php
-views/home.php
 views/admin/catalogs.php
 views/admin/dashboard.php
 views/admin/form_builder.php
 views/admin/health.php
+views/admin/settings.php
 views/admin/user_detail.php
 views/admin/users.php
 views/auth/login.php
 views/auth/register.php
+views/home.php
+views/layouts/app.php
 views/onboarding/form.php
+views/setup.php
 ```
 
 ## Setup instructions
@@ -92,6 +96,22 @@ php public/install/verify_schema.php --token=YOUR_TEMP_TOKEN
 
 The install scripts do not print database passwords or password hashes. They are guarded and run only when `app.env` is `local`/`development` or a temporary `app.install_token`/`INSTALL_TOKEN` is configured.
 
+
+## Recommended admin setup order
+
+After importing schema/seeds and logging in as an admin:
+
+1. Open **System → Settings** and set the site name, site status, registration availability, and default onboarding redirect.
+2. Open **Catalogs** and review/create goals first; members select these during onboarding.
+3. In **Catalogs**, review/create provinces and cities before adding city-based questions.
+4. Open **Form Builder** and create form steps, such as Basics, Compatibility, and Lifestyle.
+5. Add question groups inside each step to keep onboarding readable.
+6. Add questions using the grouped builder sections: Basic Info, Answer Type, Privacy, Matching, Match Card, and Validation/UI.
+7. For choice/select questions, add stable options with title, value, description, sort order, and active status. If an option already has answers, disable it instead of changing its meaning.
+8. Preview onboarding as a member and verify previous answers remain selected when editing.
+9. Use **Users** to review a member profile, selected goals, onboarding status, grouped answers, privacy level, and matchable status.
+10. Use **System → Health** after changes to confirm the installation remains healthy.
+
 ## Default admin credentials
 
 - Email: `admin@example.com`
@@ -103,16 +123,20 @@ Change this password immediately after first login in a real deployment.
 
 - Visit `/` and confirm the public landing page loads.
 - Login at `/login` with the default admin credentials.
-- Open `/admin` and confirm dashboard counts appear.
+- Open `/admin` and confirm dashboard stat cards, quick links, and sidebar navigation appear.
+- Open `/admin/settings`, update settings, and confirm they persist in `admin_settings`.
+- Open `/admin/catalogs` and add/update goals, provinces, and cities.
 - Open `/admin/forms` and add a form step.
 - Add a question group under that step.
 - Add text, choice/select, city, boolean, date, number, scale, and range questions.
-- Confirm important question saves are recorded in `audit_logs`.
+- Edit a choice/select question and confirm option IDs are preserved while removed options are soft-disabled.
+- Confirm important admin saves are recorded in `audit_logs`.
 - Register a member account at `/register`.
 - Complete `/onboarding`, selecting goals, database-backed question options, and database-backed cities.
+- Re-open `/onboarding` and confirm previous answers are visually preserved and progress is shown.
 - Confirm answers are saved into `user_answers`, `user_answer_options`, and `user_answer_cities` based on answer type.
 - Confirm `user_onboarding_progress` marks onboarding complete.
-- As admin, open `/admin/users`, then a user detail page, and confirm profile, goals, and readable dynamic answers render correctly.
+- As admin, open `/admin/users`, then a user detail page, and confirm profile summary, goals, onboarding status, grouped answers, privacy level, and matchable status render correctly.
 - Confirm page output escapes user-provided text by entering characters such as `<script>` in text answers.
 
 ## Production deployment checklist for shared hosting

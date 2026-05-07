@@ -7,7 +7,7 @@ function install_expected_tables(): array
         'roles', 'permissions', 'role_permissions', 'users', 'goals', 'user_goals',
         'provinces', 'cities', 'form_steps', 'question_groups', 'questions',
         'question_options', 'user_answers', 'user_answer_options', 'user_answer_cities',
-        'user_onboarding_progress', 'audit_logs',
+        'user_onboarding_progress', 'audit_logs', 'admin_settings',
     ];
 }
 
@@ -39,7 +39,7 @@ function install_request_token(): string
     if (PHP_SAPI === 'cli') {
         global $argv;
         foreach ($argv ?? [] as $arg) {
-            if (str_starts_with($arg, '--token=')) {
+            if (strpos($arg, '--token=') === 0) {
                 return substr($arg, 8);
             }
         }

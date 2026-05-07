@@ -93,3 +93,11 @@ INSERT INTO question_options (id, question_id, label, value, sort_order, is_acti
 (17, 14, 'Park', 'park', 20, 1),
 (18, 14, 'Community event', 'event', 30, 1)
 ON DUPLICATE KEY UPDATE question_id=VALUES(question_id), label=VALUES(label), value=VALUES(value), sort_order=VALUES(sort_order), is_active=VALUES(is_active), deleted_at=NULL;
+
+
+INSERT INTO admin_settings (setting_key, setting_value, updated_by) VALUES
+('site_name', 'Doostyabi', 1),
+('site_status', 'active', 1),
+('registration_enabled', '1', 1),
+('default_onboarding_redirect', '/onboarding', 1)
+ON DUPLICATE KEY UPDATE setting_value=setting_value;
