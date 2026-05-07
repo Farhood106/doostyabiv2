@@ -37,6 +37,8 @@ $router->post('/admin/catalogs/cities/delete', [AdminController::class, 'deleteC
 $router->get('/admin/health', [AdminController::class, 'health']);
 $router->get('/admin/matches', [AdminController::class, 'matches']);
 $router->post('/admin/matches/run', [AdminController::class, 'runMatching']);
+$router->post('/admin/matches/reset', [AdminController::class, 'resetMatch']);
+$router->post('/admin/matches/recalculate', [AdminController::class, 'recalculateMatch']);
 $router->get('/admin/settings', [AdminController::class, 'settings']);
 $router->post('/admin/settings', [AdminController::class, 'saveSettings']);
 $router->get('/admin/users', [AdminController::class, 'users']);

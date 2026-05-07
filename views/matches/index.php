@@ -13,7 +13,9 @@
         <?= csrf_field() ?><input type="hidden" name="match_id" value="<?= (int)$card['match_id'] ?>">
         <button name="action" value="interested" <?= ($card['viewer_action'] ?? '') === 'interested' ? 'disabled' : '' ?>>Interested</button>
         <button class="secondary" name="action" value="pass" <?= ($card['viewer_action'] ?? '') === 'pass' ? 'disabled' : '' ?>>Pass</button>
+        <button class="secondary" name="action" value="block" onclick="return confirm('Block this anonymous profile?')">Block</button>
     </form>
+    <?php if (($card['viewer_action'] ?? '') === 'interested'): ?><p class="pill">You marked Interested.</p><?php endif; ?>
     <?php if ($card['match_status'] === 'mutual'): ?><p class="pill">Mutual interest saved. Chat is not enabled yet.</p><?php endif; ?>
 </section>
 <?php endforeach; ?>

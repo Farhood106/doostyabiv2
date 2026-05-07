@@ -13,6 +13,7 @@ public/assets/style.css
 public/index.php
 public/install/_common.php
 public/install/check.php
+public/install/smoke_matching.php
 public/install/verify_schema.php
 scripts/run_matching.php
 src/Controllers/AdminController.php
@@ -90,8 +91,9 @@ views/setup.php
 7. In phpMyAdmin, import `database/seeds.sql` second.
 8. Visit `/install/check.php?token=YOUR_TEMP_TOKEN` to verify PHP extensions, config loading, database connectivity, writable folders, and table existence.
 9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, the default admin account, default password hash verification, and core seed records.
-10. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
-11. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
+10. Visit `/install/smoke_matching.php?token=YOUR_TEMP_TOKEN` after imports to create safe smoke users and verify the matching service can create a card.
+11. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
+12. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
 
 ### Running install checks from SSH/CLI
 
@@ -148,6 +150,8 @@ Change this password immediately after first login in a real deployment.
 - As admin, open `/admin/matches`, run matching for a user, and confirm scores/explanations appear.
 - As a member, open `/matches` and confirm cards are anonymous and interested/pass actions save.
 - Confirm mutual status is set only after both users choose Interested.
+- Block a card and confirm it disappears, `blocks` has a row, and the match status becomes `blocked`.
+- As admin, reset a match, clear actions, recalculate a match, and review blocked pairs.
 - Confirm page output escapes user-provided text by entering characters such as `<script>` in text answers.
 
 
@@ -176,6 +180,27 @@ The Phase 3 matching engine is intentionally simple, explainable, and privacy-fi
 4. Ask users to complete onboarding with goals, cities, and matchable answers.
 5. Open **Admin → Matches**, choose a user, and run matching.
 6. Review saved score breakdowns and explanations before enabling broader use.
+
+
+### Blocks, pass, and interested behavior
+
+- Members can choose **Interested**, **Pass**, or **Block** from an anonymous card.
+- A pass hides that card for the acting member and marks the match as passed unless an admin resets it.
+- Interested is idempotent; clicking it again will not create duplicate action rows.
+- A mutual status is set only after both users choose Interested.
+- Block creates a `blocks` row, stores a `match_actions` row with `block`, updates the match to `blocked`, and hides cards for both directions.
+- Matching candidate selection excludes both directions of active blocks.
+- Admins can reset a match, optionally clear actions, recalculate a pair, and review blocked pairs from **Admin → Matches**.
+
+### Matching smoke test
+
+After importing schema and seeds on shared hosting, run the guarded smoke test:
+
+```text
+/install/smoke_matching.php?token=YOUR_TEMP_TOKEN
+```
+
+The smoke test creates or reuses two `@example.invalid` test members, assigns a shared seeded goal, runs matching, and reports whether an anonymous card can be created. It does not expose secrets, passwords, hashes, or private answers. Delete or protect `public/install` after setup.
 
 ### Shared-hosting cron command
 

@@ -16,7 +16,8 @@ class MatchController
     {
         \verify_csrf();
         $user = Auth::requireLogin();
-        (new MatchRepository())->recordAction((int)($_POST['match_id'] ?? 0), (int)$user['id'], $_POST['action'] ?? '');
+        $action = $_POST['action'] ?? '';
+        (new MatchRepository())->recordAction((int)($_POST['match_id'] ?? 0), (int)$user['id'], $action);
         \flash('success', 'Match preference saved.');
         \redirect('/matches');
     }

@@ -208,6 +208,22 @@ CREATE TABLE IF NOT EXISTS admin_settings (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE IF NOT EXISTS blocks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    blocker_user_id INT NOT NULL,
+    blocked_user_id INT NOT NULL,
+    reason_text TEXT NULL,
+    source VARCHAR(50) NOT NULL DEFAULT 'member',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    UNIQUE KEY uq_blocks_pair (blocker_user_id, blocked_user_id),
+    INDEX idx_blocks_blocker (blocker_user_id, deleted_at),
+    INDEX idx_blocks_blocked (blocked_user_id, deleted_at),
+    FOREIGN KEY (blocker_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (blocked_user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS match_recommendation_queue (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -226,7 +242,7 @@ CREATE TABLE IF NOT EXISTS matches (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_one_id INT NOT NULL,
     user_two_id INT NOT NULL,
-    match_status ENUM('suggested','mutual','passed','archived') NOT NULL DEFAULT 'suggested',
+    match_status ENUM('suggested','mutual','passed','blocked','archived') NOT NULL DEFAULT 'suggested',
     compatibility_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     confidence_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     generated_at DATETIME NULL,
@@ -289,7 +305,7 @@ CREATE TABLE IF NOT EXISTS match_actions (
     match_id BIGINT NOT NULL,
     actor_user_id INT NOT NULL,
     target_user_id INT NOT NULL,
-    action ENUM('interested','pass') NOT NULL,
+    action ENUM('interested','pass','block') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_match_actions_actor (match_id, actor_user_id),
     INDEX idx_match_actions_target (target_user_id, action),

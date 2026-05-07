@@ -21,9 +21,10 @@ class MatchRepository
             JOIN roles r ON r.id=u.role_id AND r.name='user'
             JOIN user_goals g1 ON g1.user_id=?
             JOIN user_goals g2 ON g2.user_id=u.id AND g2.goal_id=g1.goal_id
-            WHERE u.is_active=1 AND u.id<>? $existingSql
+            WHERE u.is_active=1 AND u.id<>?
+            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=? AND b.blocked_user_id=u.id) OR (b.blocker_user_id=u.id AND b.blocked_user_id=?))) $existingSql
             ORDER BY u.id";
-        $params = [$userId, $userId];
+        $params = [$userId, $userId, $userId, $userId];
         if (!$recalculate) { $params[] = $userId; $params[] = $userId; }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -98,6 +99,8 @@ class MatchRepository
             FROM match_cards mc JOIN matches m ON m.id=mc.match_id
             LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
             WHERE mc.viewer_user_id=? AND mc.privacy_level='anonymous' AND m.match_status IN ('suggested','mutual')
+            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=mc.viewer_user_id AND b.blocked_user_id=mc.target_user_id) OR (b.blocker_user_id=mc.target_user_id AND b.blocked_user_id=mc.viewer_user_id)))
+            AND COALESCE(ma.action,'') NOT IN ('pass','block')
             ORDER BY m.compatibility_score DESC, mc.updated_at DESC");
         $stmt->execute([$userId]);
         return $stmt->fetchAll();
@@ -106,9 +109,10 @@ class MatchRepository
     public function recordAction(int $matchId, int $actorId, string $action): void
     {
         $targetId = $this->targetForActor($matchId, $actorId);
-        if (!$targetId || !in_array($action, ['interested','pass'], true)) { return; }
+        if (!$targetId || !in_array($action, ['interested','pass','block'], true)) { return; }
         $stmt = $this->db->prepare('INSERT INTO match_actions (match_id, actor_user_id, target_user_id, action) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE action=VALUES(action), created_at=CURRENT_TIMESTAMP');
         $stmt->execute([$matchId, $actorId, $targetId, $action]);
+        if ($action === 'block') { $this->blockUser($actorId, $targetId, 'Blocked from match card', 'match_card'); $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE id=?")->execute([$matchId]); return; }
         if ($action === 'pass') { $this->db->prepare("UPDATE matches SET match_status='passed' WHERE id=?")->execute([$matchId]); return; }
         $check = $this->db->prepare("SELECT COUNT(*) FROM match_actions WHERE match_id=? AND action='interested'");
         $check->execute([$matchId]);
@@ -122,6 +126,34 @@ class MatchRepository
         $m = $stmt->fetch();
         if (!$m) { return null; }
         return ((int)$m['user_one_id'] === $actorId) ? (int)$m['user_two_id'] : (int)$m['user_one_id'];
+    }
+
+
+    public function blockUser(int $blockerId, int $blockedId, ?string $reason = null, string $source = 'member'): void
+    {
+        if ($blockerId === $blockedId) { return; }
+        $stmt = $this->db->prepare('INSERT INTO blocks (blocker_user_id, blocked_user_id, reason_text, source) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE reason_text=VALUES(reason_text), source=VALUES(source), deleted_at=NULL');
+        $stmt->execute([$blockerId, $blockedId, $reason, $source]);
+        $one = min($blockerId, $blockedId); $two = max($blockerId, $blockedId);
+        $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE user_one_id=? AND user_two_id=?")->execute([$one, $two]);
+    }
+
+    public function blockedPairs(): array
+    {
+        return $this->db->query("SELECT b.*, u1.first_name AS blocker_name, u2.first_name AS blocked_name FROM blocks b JOIN users u1 ON u1.id=b.blocker_user_id JOIN users u2 ON u2.id=b.blocked_user_id WHERE b.deleted_at IS NULL ORDER BY b.created_at DESC LIMIT 200")->fetchAll();
+    }
+
+    public function resetMatch(int $matchId, bool $clearActions = false): void
+    {
+        $this->db->prepare("UPDATE matches SET match_status='suggested' WHERE id=? AND match_status<>'blocked'")->execute([$matchId]);
+        if ($clearActions) { $this->db->prepare('DELETE FROM match_actions WHERE match_id=?')->execute([$matchId]); }
+    }
+
+    public function pairForMatch(int $matchId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT user_one_id,user_two_id FROM matches WHERE id=?');
+        $stmt->execute([$matchId]);
+        return $stmt->fetch() ?: null;
     }
 
     public function allMatches(): array

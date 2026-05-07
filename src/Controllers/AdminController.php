@@ -141,6 +141,7 @@ class AdminController
             'explanation' => $selectedMatchId ? $repo->explanationForMatch($selectedMatchId) : null,
             'selectedMatchId' => $selectedMatchId,
             'users' => (new UserRepository())->allMembers(),
+            'blockedPairs' => $repo->blockedPairs(),
         ]);
     }
     public function runMatching(): void
@@ -153,6 +154,32 @@ class AdminController
             \flash('success', 'Generated or updated ' . $count . ' match recommendations.');
         }
         \redirect('/admin/matches');
+    }
+
+    public function resetMatch(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        $matchId = (int)($_POST['match_id'] ?? 0);
+        if ($matchId > 0) {
+            (new MatchRepository())->resetMatch($matchId, !empty($_POST['clear_actions']));
+            \flash('success', 'Match reset.');
+        }
+
+edirect('/admin/matches');
+    }
+    public function recalculateMatch(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        $repo = new MatchRepository();
+        $pair = $repo->pairForMatch((int)($_POST['match_id'] ?? 0));
+        if ($pair) {
+            (new MatchService())->runForUser((int)$pair['user_one_id'], true, 50);
+            \flash('success', 'Match pair recalculated.');
+        }
+
+edirect('/admin/matches');
     }
     public function settings(): void
     {
