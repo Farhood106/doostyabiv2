@@ -9,6 +9,9 @@ A privacy-first, compatibility-based relationship/matching platform built with s
 config.example.php
 database/schema.sql
 database/seeds.sql
+public/install/_common.php
+public/install/check.php
+public/install/verify_schema.php
 public/index.php
 public/assets/style.css
 src/bootstrap.php
@@ -63,6 +66,31 @@ views/onboarding/form.php
    php -S 127.0.0.1:8000 -t public
    ```
 6. Open `http://127.0.0.1:8000`.
+
+## cPanel shared-hosting installation
+
+1. In cPanel, create a MySQL/MariaDB database and database user, then grant the user privileges on that database.
+2. Upload the project outside `public_html` when possible, for example to `/home/YOUR_CPANEL_USER/doostyabi`.
+3. Point the domain or subdomain document root to the project's `public/` directory. If your host cannot point outside `public_html`, place the contents of `public/` in `public_html` temporarily (including `install/` for setup), keep `src/`, `database/`, `storage/`, `views/`, and `config.php` outside the web root, and delete or protect `public_html/install` immediately after setup.
+4. Copy `config.example.php` to `config.php` in the project root. Set `db.host`, `db.name`, `db.user`, `db.pass`, and keep `app.env` as `production`.
+5. Temporarily set `app.install_token` in `config.php` to a long random string, such as a 32+ character password-manager value. Do not reuse the database password.
+6. Open phpMyAdmin, select the new database, use **Import**, and import `database/schema.sql` first.
+7. In phpMyAdmin, import `database/seeds.sql` second.
+8. Visit `/install/check.php?token=YOUR_TEMP_TOKEN` to verify PHP extensions, config loading, database connectivity, writable folders, and table existence.
+9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, the default admin account, default password hash verification, and core seed records.
+10. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
+11. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
+
+### Running install checks from SSH/CLI
+
+If your shared host provides SSH, you can run:
+
+```bash
+php public/install/check.php --token=YOUR_TEMP_TOKEN
+php public/install/verify_schema.php --token=YOUR_TEMP_TOKEN
+```
+
+The install scripts do not print database passwords or password hashes. They are guarded and run only when `app.env` is `local`/`development` or a temporary `app.install_token`/`INSTALL_TOKEN` is configured.
 
 ## Default admin credentials
 

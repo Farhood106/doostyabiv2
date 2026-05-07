@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action VARCHAR(120) NOT NULL,
     entity_type VARCHAR(80) NOT NULL,
     entity_id INT NULL,
-    metadata LONGTEXT NULL CHECK (JSON_VALID(metadata)),
+    metadata LONGTEXT NULL,
     ip_address VARCHAR(45) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_audit_entity (entity_type, entity_id),
