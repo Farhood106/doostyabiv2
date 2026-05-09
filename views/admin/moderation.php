@@ -1,18 +1,18 @@
-<h1>Moderation reports</h1>
-<p class="muted">Review reports about matches, chats, messages, and users. Admin actions here do not expose member private data to reporters.</p>
+<h1>گزارش‌ها و رسیدگی</h1>
+<p class="muted">گزارش‌های مربوط به معرفی‌ها، گفت‌وگوها، پیام‌ها و اعضا را بررسی کنید. اقدام‌های مدیر نباید داده خصوصی اعضا را برای گزارش‌دهنده آشکار کند.</p>
 <section class="card">
     <form method="get" action="/admin/moderation" class="grid four">
-        <label>Status<select name="status"><option value="">Any</option><?php foreach (['open','reviewing','resolved','dismissed'] as $status): ?><option value="<?= e($status) ?>" <?= ($filters['status'] ?? '')===$status?'selected':'' ?>><?= e($status) ?></option><?php endforeach; ?></select></label>
-        <label>Type<select name="report_type"><option value="">Any</option><?php foreach (['match','chat','message','user','spam','harassment','safety','other'] as $type): ?><option value="<?= e($type) ?>" <?= ($filters['report_type'] ?? '')===$type?'selected':'' ?>><?= e($type) ?></option><?php endforeach; ?></select></label>
-        <label>Priority<select name="priority"><option value="">Any</option><?php foreach (['low','normal','high','urgent'] as $priority): ?><option value="<?= e($priority) ?>" <?= ($filters['priority'] ?? '')===$priority?'selected':'' ?>><?= e($priority) ?></option><?php endforeach; ?></select></label>
-        <button>Filter</button>
+        <label>وضعیت<select name="status"><option value="">همه</option><?php foreach (['open','reviewing','resolved','dismissed'] as $status): ?><option value="<?= e($status) ?>" <?= ($filters['status'] ?? '')===$status?'selected':'' ?>><?= e(fa_label($status)) ?></option><?php endforeach; ?></select></label>
+        <label>نوع<select name="report_type"><option value="">همه</option><?php foreach (['match','chat','message','user','spam','harassment','safety','other'] as $type): ?><option value="<?= e($type) ?>" <?= ($filters['report_type'] ?? '')===$type?'selected':'' ?>><?= e(fa_label($type)) ?></option><?php endforeach; ?></select></label>
+        <label>اولویت<select name="priority"><option value="">همه</option><?php foreach (['low','normal','high','urgent'] as $priority): ?><option value="<?= e($priority) ?>" <?= ($filters['priority'] ?? '')===$priority?'selected':'' ?>><?= e(fa_label($priority)) ?></option><?php endforeach; ?></select></label>
+        <button>فیلتر</button>
     </form>
 </section>
 <section class="card table-wrap">
-<table><thead><tr><th>ID</th><th>Status</th><th>Priority</th><th>Type</th><th>Reason</th><th>Reporter</th><th>Reported</th><th>Assigned</th><th>Created</th><th>Action</th></tr></thead><tbody>
+<table><thead><tr><th>شناسه</th><th>وضعیت</th><th>اولویت</th><th>نوع</th><th>دلیل</th><th>گزارش‌دهنده</th><th>عضو گزارش‌شده</th><th>مسئول رسیدگی</th><th>زمان ایجاد</th><th>اقدام</th></tr></thead><tbody>
 <?php foreach ($reports as $report): ?>
-<tr><td><?= (int)$report['id'] ?></td><td><?= e($report['status']) ?></td><td><?= e($report['priority']) ?></td><td><?= e($report['report_type']) ?></td><td><?= e($report['report_reason']) ?></td><td><?= e($report['reporter_name']) ?></td><td><?= e($report['reported_name']) ?></td><td><?= e($report['assigned_admin_name']) ?></td><td><?= e($report['created_at']) ?></td><td><a href="/admin/moderation/<?= (int)$report['id'] ?>">Review</a></td></tr>
+<tr><td><?= (int)$report['id'] ?></td><td><?= e(fa_label($report['status'])) ?></td><td><?= e(fa_label($report['priority'])) ?></td><td><?= e(fa_label($report['report_type'])) ?></td><td><?= e(fa_label($report['report_reason'])) ?></td><td><?= e($report['reporter_name']) ?></td><td><?= e($report['reported_name']) ?></td><td><?= e($report['assigned_admin_name']) ?></td><td><?= e($report['created_at']) ?></td><td><a href="/admin/moderation/<?= (int)$report['id'] ?>">بررسی</a></td></tr>
 <?php endforeach; ?>
 </tbody></table>
-<?php if (!$reports): ?><p>No reports match the selected filters.</p><?php endif; ?>
+<?php if (!$reports): ?><p>هیچ گزارشی با فیلترهای انتخاب‌شده پیدا نشد.</p><?php endif; ?>
 </section>

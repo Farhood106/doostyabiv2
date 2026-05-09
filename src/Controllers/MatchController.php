@@ -18,7 +18,7 @@ class MatchController
         $user = Auth::requireLogin();
         $action = $_POST['action'] ?? '';
         (new MatchRepository())->recordAction((int)($_POST['match_id'] ?? 0), (int)$user['id'], $action);
-        \flash('success', 'Match preference saved.');
+        \flash('success', 'انتخاب شما برای این معرفی ذخیره شد.');
         \redirect('/matches');
     }
 }

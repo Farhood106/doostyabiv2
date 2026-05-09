@@ -28,7 +28,7 @@ class OnboardingController
         \verify_csrf();
         $user = Auth::requireLogin();
         [$ok, $errors] = (new OnboardingService())->submit((int)$user['id'], $_POST);
-        if ($ok) { \flash('success', 'Onboarding saved.'); \redirect('/onboarding'); }
+        if ($ok) { \flash('success', 'شناخت‌نامه شما ذخیره شد.'); \redirect('/onboarding'); }
         View::render('onboarding/form', [
             'user' => $user,
             'steps' => (new FormRepository())->activeSteps(),

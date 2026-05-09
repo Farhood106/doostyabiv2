@@ -18,7 +18,7 @@ class SafetyController
         \verify_csrf();
         $user = Auth::requireLogin();
         $ok = (new SafetyRepository())->unblock((int)($_POST['block_id'] ?? 0), (int)$user['id']);
-        \flash($ok ? 'success' : 'error', $ok ? 'User unblocked.' : 'Block could not be updated.');
+        \flash($ok ? 'success' : 'error', $ok ? 'رفع مسدودی انجام شد.' : 'فعلاً امکان به‌روزرسانی مسدودی نیست.');
         \redirect('/safety');
     }
 }

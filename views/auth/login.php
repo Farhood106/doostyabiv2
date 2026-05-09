@@ -1,15 +1,15 @@
 <div class="auth-shell">
     <section class="card auth-card">
-        <span class="eyebrow">Welcome back</span>
-        <h1>Log in to your private space</h1>
-        <p class="muted">Continue onboarding, review anonymous matches, or return to a mutual chat. Your contact details are never shown automatically.</p>
+        <span class="eyebrow">خوش برگشتید</span>
+        <h1>ورود به فضای خصوصی شما</h1>
+        <p class="muted">شناخت‌نامه را ادامه دهید، معرفی‌های ناشناس را مرور کنید یا به گفت‌وگوی دوطرفه برگردید. اطلاعات تماس شما خودکار نمایش داده نمی‌شود.</p>
         <form method="post" action="/login">
             <?= csrf_field() ?>
-            <label>Email <input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
-            <label>Password <input type="password" name="password" autocomplete="current-password" required placeholder="Your password"></label>
-            <button class="button large">Log in safely</button>
+            <label>ایمیل <input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+            <label>رمز عبور <input type="password" name="password" autocomplete="current-password" required placeholder="رمز عبور شما"></label>
+            <button class="button large">ورود امن</button>
         </form>
-        <p class="auth-switch">New here? <a href="/register">Create a private account</a></p>
+        <p class="auth-switch">تازه وارد هستید؟ <a href="/register">یک حساب خصوصی بسازید</a></p>
     </section>
-    <aside class="card auth-side"><h2>Privacy-first by design</h2><ul class="soft-list"><li>No public profile directory.</li><li>Anonymous match cards.</li><li>Mutual consent before chat and reveal.</li></ul></aside>
+    <aside class="card auth-side"><h2>طراحی با اولویت حریم خصوصی</h2><ul class="soft-list"><li>فهرست عمومی پروفایل‌ها وجود ندارد.</li><li>کارت‌های معرفی ناشناس هستند.</li><li>گفت‌وگو و نمایش اطلاعات با رضایت دوطرفه انجام می‌شود.</li></ul></aside>
 </div>

@@ -18,10 +18,10 @@ class OnboardingService
         $normalized = [];
         foreach ($questions as $id => $question) {
             $value = $input['answers'][$id] ?? null;
-            if ($question['is_required'] && ($value === null || $value === '' || $value === [])) { $errors[$id] = 'This answer is required.'; continue; }
+            if ($question['is_required'] && ($value === null || $value === '' || $value === [])) { $errors[$id] = 'پاسخ به این پرسش ضروری است.'; continue; }
             if ($value === null || $value === '' || $value === []) { continue; }
             [$valid, $clean] = $this->validateAndNormalize($question, $value, $form);
-            if (!$valid) { $errors[$id] = 'Invalid answer format.'; continue; }
+            if (!$valid) { $errors[$id] = 'قالب پاسخ قابل قبول نیست.'; continue; }
             $normalized[$id] = $clean;
         }
         if ($errors) { return [false, $errors]; }

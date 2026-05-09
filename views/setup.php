@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Setup required</title><link rel="stylesheet" href="/assets/style.css"></head>
-<body><main class="container"><section class="card narrow"><h1>Setup required</h1><p>The application is installed, but <code>config.php</code> is missing.</p><ol><li>Copy <code>config.example.php</code> to <code>config.php</code>.</li><li>Update the database credentials and environment.</li><li>Import <code>database/schema.sql</code> and <code>database/seeds.sql</code>.</li></ol><p class="muted">For security, real credentials should never be committed.</p></section></main></body>
+<html lang="fa" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>نیاز به راه‌اندازی</title><link rel="stylesheet" href="/assets/style.css"></head>
+<body><main class="container"><section class="card narrow"><h1>راه‌اندازی لازم است</h1><p>برنامه نصب شده، اما فایل <code>config.php</code> هنوز وجود ندارد.</p><ol><li>فایل <code>config.example.php</code> را به <code>config.php</code> کپی کنید.</li><li>مشخصات پایگاه داده و محیط اجرا را تنظیم کنید.</li><li>فایل‌های <code>database/schema.sql</code> و <code>database/seeds.sql</code> را وارد کنید.</li></ol><p class="muted">برای امنیت، اطلاعات واقعی ورود نباید در مخزن ثبت شود.</p></section></main></body>
 </html>

@@ -415,3 +415,38 @@ SELECT id, 'admin@example.com', 'PASTE_HASH_HERE', 'Admin', 1 FROM roles WHERE n
 - **Tables missing on System Health:** import `database/schema.sql`, then `database/seeds.sql`.
 - **Invalid CSRF token:** refresh the form page and resubmit; also verify PHP sessions are working and cookies are enabled.
 - **Cannot write logs:** update permissions or ownership for `storage/logs` so the PHP process can write there.
+
+## Persian localization and RTL UX (Phase 7.5)
+
+Phase 7.5 makes the product Persian-first while keeping the existing shared-hosting PHP/MySQL architecture and without adding new product features.
+
+### Localization approach
+
+- The application shell uses `lang="fa"` and `dir="rtl"` so browsers, forms, tables, assistive technologies, and mobile layouts treat the UI as Persian/RTL by default.
+- User-facing screens are written in natural Persian instead of direct word-for-word translation. The tone is intentionally calm, respectful, privacy-safe, and non-judgmental.
+- Matching language avoids harsh dating-app wording. For example, user actions use softer Persian phrasing such as «مایلم بیشتر بدانم» and «فعلاً نه».
+- Statuses, privacy levels, answer types, report reasons, reveal directions, and moderation labels are mapped through a small helper (`fa_label`) so technical enum values are not shown raw to members or admins.
+- Validation and flash messages are friendly Persian messages and avoid exposing technical details where possible.
+- Seed data has Persian defaults for roles, permissions, goals, Iranian-style locations, onboarding steps, questions, options, and reveal types so fresh installs start with Persian content.
+
+### RTL and typography considerations
+
+- CSS uses logical/right-side spacing for cards, onboarding panels, safety panels, admin stat cards, and chat previews.
+- Admin navigation is anchored to the right side and content margins are mirrored for RTL.
+- Tables use right-aligned headers/cells with horizontal overflow for small screens.
+- Forms and textareas default to RTL alignment, while email, password, slug, country-code, and code fields stay LTR for readability.
+- Chat bubbles are mirrored for RTL: the current member’s messages align to the left and the other member’s messages align to the right, with Persian-friendly line-height and timestamp spacing.
+- Typography uses a Persian font fallback stack: `Vazirmatn`, `IRANSans`, `Shabnam`, `Tahoma`, `Segoe UI`, Arial, and generic sans-serif. This keeps text readable even on shared hosting without requiring bundled font files.
+- Mobile breakpoints preserve RTL flow by stacking navigation, cards, form grids, and chat headers while keeping message bubbles readable.
+
+### Manual RTL visual QA checklist
+
+1. Open the landing page and verify the hero, CTA buttons, privacy promise cards, and lists read right-to-left with comfortable Persian line spacing.
+2. Open login and registration pages on desktop and mobile widths; verify labels, placeholders, error messages, and email/password direction are correct.
+3. Complete onboarding and verify steps, progress, goal chips, dynamic fields, required errors, and save panels are RTL-friendly.
+4. Review match cards and verify score, status pills, action buttons, report form, strengths, and caution sections are aligned and worded naturally.
+5. Open chat list and chat detail pages; verify bubbles, timestamps, reveal request cards, report controls, and composer textarea are readable in Persian.
+6. Open the safety center and verify privacy reminders, active block table, and unblock action are RTL-friendly.
+7. Open admin dashboard, users, matches, chats, moderation, reveal management, catalogs, settings, health, and form builder pages; verify sidebar, tables, statuses, badges, and form terminology are Persian.
+8. Resize to mobile width and verify the admin sidebar, tables, cards, forms, chat bubbles, and buttons do not break RTL layout.
+9. Confirm no public profile links, automatic contact reveals, or heavy frontend frameworks were introduced.

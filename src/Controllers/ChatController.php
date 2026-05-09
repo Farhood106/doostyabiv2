@@ -40,7 +40,7 @@ class ChatController
         \verify_csrf();
         $user = Auth::requireLogin();
         $sent = (new ChatRepository())->sendMessage($id, (int)$user['id'], (string)($_POST['body'] ?? ''));
-        \flash($sent ? 'success' : 'error', $sent ? 'Message sent.' : 'Message could not be sent. Chat may be closed, blocked, or the message may be empty/too long.');
+        \flash($sent ? 'success' : 'error', $sent ? 'پیام ارسال شد.' : 'پیام ارسال نشد. ممکن است گفت‌وگو بسته یا مسدود باشد، یا متن پیام خالی/بیش از حد طولانی باشد.');
         \redirect('/chats/' . $id);
     }
 
@@ -50,7 +50,7 @@ class ChatController
         \verify_csrf();
         $user = Auth::requireLogin();
         $created = (new RevealRepository())->createRequest($id, (int)$user['id'], (int)($_POST['reveal_type_id'] ?? 0), (string)($_POST['request_message'] ?? ''));
-        \flash($created ? 'success' : 'error', $created ? 'Reveal request sent.' : 'Reveal request could not be created. The chat may be closed, blocked, not mutual, or already pending.');
+        \flash($created ? 'success' : 'error', $created ? 'درخواست نمایش ارسال شد.' : 'درخواست نمایش ثبت نشد. ممکن است گفت‌وگو بسته یا مسدود باشد، دوطرفه نباشد یا درخواست مشابهی در انتظار پاسخ باشد.');
         \redirect('/chats/' . $id);
     }
 
@@ -61,7 +61,7 @@ class ChatController
         $chatId = (int)($_POST['chat_id'] ?? 0);
         $status = (string)($_POST['status'] ?? '');
         $responded = (new RevealRepository())->respond((int)($_POST['request_id'] ?? 0), (int)$user['id'], $status, (string)($_POST['response_note'] ?? ''));
-        \flash($responded ? 'success' : 'error', $responded ? 'Reveal request updated.' : 'Reveal request could not be updated. Only the target can approve or reject pending requests.');
+        \flash($responded ? 'success' : 'error', $responded ? 'درخواست نمایش به‌روزرسانی شد.' : 'درخواست نمایش به‌روزرسانی نشد. فقط دریافت‌کننده درخواست می‌تواند درخواست‌های در انتظار را تأیید یا رد کند.');
         \redirect('/chats/' . $chatId);
     }
 
@@ -72,7 +72,7 @@ class ChatController
         $chatId = (int)($_POST['chat_id'] ?? 0);
         $messageId = (int)($_POST['message_id'] ?? 0);
         $flagged = (new ChatRepository())->flagMessage($messageId, (int)$user['id'], (string)($_POST['reason'] ?? ''));
-        \flash($flagged ? 'success' : 'error', $flagged ? 'Message flagged for admin review.' : 'Message could not be flagged.');
+        \flash($flagged ? 'success' : 'error', $flagged ? 'پیام برای بررسی مدیران علامت‌گذاری شد.' : 'پیام گزارش نشد.');
         \redirect('/chats/' . $chatId);
     }
 }
