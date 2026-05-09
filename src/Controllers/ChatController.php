@@ -5,6 +5,7 @@ use App\Core\Auth;
 use App\Core\View;
 use App\Repositories\ChatRepository;
 use App\Repositories\RevealRepository;
+use App\Repositories\ReportRepository;
 
 class ChatController
 {

@@ -17,6 +17,15 @@
     </form>
     <?php if (($card['viewer_action'] ?? '') === 'interested'): ?><p class="pill">You marked Interested.</p><?php endif; ?>
     <?php if ($card['match_status'] === 'mutual'): ?><p class="pill">Mutual interest saved. <a href="/chats">Open chats</a>.</p><?php endif; ?>
+
+    <details class="report-box"><summary>Report this match</summary>
+        <form method="post" action="/reports/match" class="grid two">
+            <?= csrf_field() ?><input type="hidden" name="match_id" value="<?= (int)$card['match_id'] ?>"><input type="hidden" name="report_type" value="match">
+            <label>Reason<select name="report_reason"><option value="harassment">Harassment</option><option value="spam">Spam or scam</option><option value="fake_profile">Fake profile</option><option value="unsafe_behavior">Unsafe behavior</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select></label>
+            <label class="full">Description<textarea name="description" rows="2" maxlength="1000" placeholder="Share only what admins need to review this safely."></textarea></label>
+            <button class="secondary">Submit report</button>
+        </form>
+    </details>
 </section>
 <?php endforeach; ?>
 </div>

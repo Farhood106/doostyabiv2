@@ -15,6 +15,7 @@ use App\Services\AdminCatalogService;
 use App\Services\AdminSettingsService;
 use App\Repositories\MatchRepository;
 use App\Repositories\RevealRepository;
+use App\Repositories\ReportRepository;
 use App\Repositories\ChatRepository;
 use App\Services\FormBuilderService;
 use App\Services\MatchService;
@@ -233,6 +234,47 @@ class AdminController
             \flash('error', 'Reveal type could not be saved. Use a title, slug, and allowed field key.');
         }
         \redirect('/admin/reveals');
+    }
+
+
+    public function moderation(): void
+    {
+        Auth::requireAdmin();
+        View::render('admin/moderation', [
+            'reports' => (new ReportRepository())->allForAdmin($_GET),
+            'filters' => $_GET,
+        ]);
+    }
+
+    public function reportDetail(int $id): void
+    {
+        Auth::requireAdmin();
+        $report = (new ReportRepository())->findForAdmin($id);
+        if (!$report) { http_response_code(404); exit('Report not found'); }
+        View::render('admin/report_detail', ['report' => $report]);
+    }
+
+    public function updateReport(int $id): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        $updated = (new ReportRepository())->updateModeration($id, (int)$admin['id'], (string)($_POST['status'] ?? 'reviewing'), (string)($_POST['priority'] ?? 'normal'), (string)($_POST['admin_resolution_note'] ?? ''), !empty($_POST['assign_to_me']));
+        \flash($updated ? 'success' : 'error', $updated ? 'Report updated.' : 'Report could not be updated.');
+        \redirect('/admin/moderation/' . $id);
+    }
+
+    public function blockFromReport(int $id): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        $report = (new ReportRepository())->findForAdmin($id);
+        if ($report && !empty($report['reported_user_id'])) {
+            (new MatchRepository())->blockUser((int)$report['reporter_user_id'], (int)$report['reported_user_id'], 'Blocked by moderation after report #' . $id, 'moderation_report');
+            \flash('success', 'Reported user blocked for the reporter.');
+        } else {
+            \flash('error', 'Reported user could not be blocked.');
+        }
+        \redirect('/admin/moderation/' . $id);
     }
 
     public function settings(): void

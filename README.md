@@ -22,6 +22,8 @@ src/Controllers/ChatController.php
 src/Controllers/HomeController.php
 src/Controllers/MatchController.php
 src/Controllers/OnboardingController.php
+src/Controllers/ReportController.php
+src/Controllers/SafetyController.php
 src/Core/Auth.php
 src/Core/Database.php
 src/Core/Helpers.php
@@ -38,6 +40,8 @@ src/Repositories/GoalRepository.php
 src/Repositories/LocationRepository.php
 src/Repositories/MatchRepository.php
 src/Repositories/RevealRepository.php
+src/Repositories/ReportRepository.php
+src/Repositories/SafetyRepository.php
 src/Repositories/UserRepository.php
 src/Services/AdminCatalogService.php
 src/Services/AdminSettingsService.php
@@ -58,6 +62,8 @@ views/admin/form_builder.php
 views/admin/health.php
 views/admin/matches.php
 views/admin/reveals.php
+views/admin/moderation.php
+views/admin/report_detail.php
 views/admin/settings.php
 views/admin/user_detail.php
 views/admin/users.php
@@ -69,6 +75,7 @@ views/home.php
 views/layouts/app.php
 views/matches/index.php
 views/onboarding/form.php
+views/safety/index.php
 views/setup.php
 ```
 
@@ -98,7 +105,7 @@ views/setup.php
 6. Open phpMyAdmin, select the new database, use **Import**, and import `database/schema.sql` first.
 7. In phpMyAdmin, import `database/seeds.sql` second.
 8. Visit `/install/check.php?token=YOUR_TEMP_TOKEN` to verify PHP extensions, config loading, database connectivity, writable folders, and table existence.
-9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, chat/reveal/moderation columns, the default admin account, default password hash verification, and core seed records.
+9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, chat/reveal/report/moderation columns, the default admin account, default password hash verification, and core seed records.
 10. Visit `/install/smoke_matching.php?token=YOUR_TEMP_TOKEN` after imports to create safe smoke users and verify the matching service can create a card.
 11. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
 12. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
@@ -270,6 +277,37 @@ Phase 5 adds limited, consent-based reveal steps inside open mutual-match chats:
 - Admin oversight is read-only for requests; forced admin approval/rejection is intentionally out of scope.
 - Only three safe mapped fields are supported initially; additional fields require explicit code-level mapping before catalog use.
 - Revealed snapshots are stored in the database for auditability and are not application-layer encrypted.
+
+
+## Reports, moderation, and safety center (Phase 6)
+
+Phase 6 adds safety workflows for members and admins without public profiles:
+
+- `reports` stores reports about matches/cards, chats, messages, and users with reporter/reported users, related match/chat/message IDs, type, reason, description, status, priority, assignment, resolution note, and resolution timestamp.
+- Members can submit CSRF-protected reports from match cards and chat pages. Message reports are participant-only and also flag the message for moderation review.
+- Report validation checks match/chat/message access so non-participants cannot report inaccessible conversations or messages.
+- **Safety Center** at `/safety` explains privacy, blocking, reporting, and reveal consent, lists active blocks, and lets members unblock when needed.
+- **Admin → Moderation** lists reports with filters for status, type, and priority. Report detail shows related user/match/chat/message context, supports assignment to the current admin, priority/status updates, resolution/dismissal notes, and blocking the reported user for the reporter.
+- Admin dashboard cards include open reports, flagged messages, and blocked pairs.
+- If an optional `notifications` table exists with a compatible shape, the app attempts generic admin notifications for new reports and generic reporter notifications after resolution; notification failures are ignored safely.
+
+### Manual moderation test checklist
+
+1. As a member, report an anonymous match card from `/matches`; verify the report appears in **Admin → Moderation**.
+2. As a chat participant, report a chat and report another participant's message; verify message reports mark the message as flagged.
+3. Log in as a third member and verify they cannot report a chat/message they cannot access.
+4. As admin, filter reports by status/type/priority, open a report detail page, assign it to yourself, change priority, and save a reviewing status.
+5. Resolve or dismiss a report with a generic note; verify the status and resolved timestamp update.
+6. From report detail, block the reported user for the reporter; verify the block appears in the reporter's Safety Center and related match/chat is disabled.
+7. As the reporter, open `/safety`, review safety guidance and active blocks, then unblock if appropriate.
+8. Confirm all member-facing report and safety screens avoid exposing email, contact info, private answers, admin-only answers, or public profiles.
+
+### Known moderation limitations
+
+- No public profiles are implemented.
+- Admin notifications are best-effort only and require a compatible optional `notifications` table.
+- Blocking from report detail blocks the reported member only for the reporter; broader account suspension is not implemented yet.
+- There is no automated abuse classifier, evidence attachment upload, or moderation SLA workflow yet.
 
 ### Matching smoke test
 

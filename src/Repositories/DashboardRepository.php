@@ -19,6 +19,9 @@ class DashboardRepository
             'questions' => (int)$this->db->query('SELECT COUNT(*) FROM questions WHERE deleted_at IS NULL')->fetchColumn(),
             'completed_onboardings' => (int)$this->db->query('SELECT COUNT(*) FROM user_onboarding_progress WHERE is_complete=1')->fetchColumn(),
             'matches' => (int)$this->db->query('SELECT COUNT(*) FROM matches')->fetchColumn(),
+            'open_reports' => (int)$this->db->query("SELECT COUNT(*) FROM reports WHERE status IN ('open','reviewing')")->fetchColumn(),
+            'flagged_messages' => (int)$this->db->query("SELECT COUNT(*) FROM messages WHERE moderation_status='flagged' AND deleted_at IS NULL")->fetchColumn(),
+            'blocked_pairs' => (int)$this->db->query('SELECT COUNT(*) FROM blocks WHERE deleted_at IS NULL')->fetchColumn(),
         ];
     }
 }

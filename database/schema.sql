@@ -310,6 +310,36 @@ CREATE TABLE IF NOT EXISTS message_flags (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+
+CREATE TABLE IF NOT EXISTS reports (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_user_id INT NOT NULL,
+    reported_user_id INT NULL,
+    match_id BIGINT NULL,
+    chat_id BIGINT NULL,
+    message_id BIGINT NULL,
+    report_type VARCHAR(50) NOT NULL,
+    report_reason VARCHAR(100) NOT NULL,
+    description TEXT NULL,
+    status ENUM('open','reviewing','resolved','dismissed') NOT NULL DEFAULT 'open',
+    priority ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
+    assigned_admin_id INT NULL,
+    admin_resolution_note TEXT NULL,
+    resolved_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_reports_status_priority (status, priority, created_at),
+    INDEX idx_reports_type (report_type, created_at),
+    INDEX idx_reports_reporter (reporter_user_id, created_at),
+    INDEX idx_reports_reported (reported_user_id, status),
+    FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE SET NULL,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE SET NULL,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS reveal_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(150) NOT NULL,

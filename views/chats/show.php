@@ -9,12 +9,14 @@
         <div class="message-body"><?= nl2br(e($message['body'])) ?></div>
         <small><?= (int)$message['sent_by_me'] === 1 ? 'You' : 'Anonymous match' ?> · <?= e($message['created_at']) ?><?php if ($message['moderation_status'] === 'flagged'): ?> · flagged<?php endif; ?></small>
         <?php if ((int)$message['sent_by_me'] !== 1): ?>
-            <form method="post" action="/chats/messages/flag" class="inline flag-form">
+            <form method="post" action="/reports/message" class="inline flag-form">
                 <?= csrf_field() ?>
                 <input type="hidden" name="chat_id" value="<?= (int)$chat['id'] ?>">
                 <input type="hidden" name="message_id" value="<?= (int)$message['id'] ?>">
-                <input type="text" name="reason" placeholder="Optional reason" maxlength="255" <?= (int)$message['flagged_by_me'] === 1 ? 'disabled' : '' ?>>
-                <button class="secondary" <?= (int)$message['flagged_by_me'] === 1 ? 'disabled' : '' ?>><?= (int)$message['flagged_by_me'] === 1 ? 'Flagged' : 'Flag message' ?></button>
+                <input type="hidden" name="report_type" value="message">
+                <select name="report_reason" <?= (int)$message['flagged_by_me'] === 1 ? 'disabled' : '' ?>><option value="harassment">Harassment</option><option value="spam">Spam</option><option value="inappropriate_content">Inappropriate</option><option value="unsafe_behavior">Unsafe</option><option value="other">Other</option></select>
+                <input type="text" name="description" placeholder="Optional details" maxlength="500" <?= (int)$message['flagged_by_me'] === 1 ? 'disabled' : '' ?>>
+                <button class="secondary" <?= (int)$message['flagged_by_me'] === 1 ? 'disabled' : '' ?>><?= (int)$message['flagged_by_me'] === 1 ? 'Reported' : 'Report message' ?></button>
             </form>
         <?php endif; ?>
     </article>
@@ -67,6 +69,19 @@
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
+</section>
+
+
+<section class="card">
+    <h2>Report this chat</h2>
+    <details><summary>Open report form</summary>
+        <form method="post" action="/reports/chat" class="grid two">
+            <?= csrf_field() ?><input type="hidden" name="chat_id" value="<?= (int)$chat['id'] ?>"><input type="hidden" name="report_type" value="chat">
+            <label>Reason<select name="report_reason"><option value="harassment">Harassment</option><option value="spam">Spam or scam</option><option value="unsafe_behavior">Unsafe behavior</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select></label>
+            <label class="full">Description<textarea name="description" rows="2" maxlength="1000"></textarea></label>
+            <button class="secondary">Submit chat report</button>
+        </form>
+    </details>
 </section>
 
 <?php if ($canSend): ?>

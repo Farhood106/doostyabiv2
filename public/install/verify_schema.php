@@ -47,6 +47,8 @@ if (!$missing) {
         'reveal_types.reveal_field_key' => "SHOW COLUMNS FROM reveal_types LIKE 'reveal_field_key'",
         'reveal_requests.status' => "SHOW COLUMNS FROM reveal_requests LIKE 'status'",
         'match_visibility_snapshots.viewer_user_id' => "SHOW COLUMNS FROM match_visibility_snapshots LIKE 'viewer_user_id'",
+        'reports.status' => "SHOW COLUMNS FROM reports LIKE 'status'",
+        'reports.priority' => "SHOW COLUMNS FROM reports LIKE 'priority'",
     ];
     foreach ($chatColumnChecks as $label => $sql) {
         $stmt = $pdo->query($sql);
