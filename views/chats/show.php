@@ -1,8 +1,7 @@
-<h1><?= e($chat['anonymous_title'] ?: 'Anonymous mutual match') ?></h1>
-<p class="muted">Privacy reminder: do not share phone numbers, email addresses, addresses, social handles, payment details, or other contact/private profile data.</p>
+<section class="chat-header card"><div><span class="eyebrow">Anonymous mutual chat</span><h1><?= e($chat['anonymous_title'] ?: 'Anonymous mutual match') ?></h1><p class="muted">Privacy reminder: do not share phone numbers, email addresses, addresses, social handles, payment details, or other contact/private profile data.</p></div><a class="button secondary" href="/safety">Safety Center</a></section>
 <?php if (!empty($chat['anonymous_summary'])): ?><section class="card"><p><?= e($chat['anonymous_summary']) ?></p><span class="pill"><?= e($chat['compatibility_label']) ?></span></section><?php endif; ?>
 <?php if (!$canSend): ?><div class="alert warning">This chat is read-only because it is closed or the match is no longer mutual.</div><?php endif; ?>
-<section class="card chat-thread">
+<section class="card chat-thread" aria-label="Conversation messages">
 <?php if (!$messages): ?><p class="muted">No messages yet. Send a privacy-safe hello.</p><?php endif; ?>
 <?php foreach ($messages as $message): ?>
     <article class="message <?= (int)$message['sent_by_me'] === 1 ? 'mine' : 'theirs' ?>">
@@ -24,7 +23,7 @@
 </section>
 
 <section class="card">
-    <h2>Consent-based reveals</h2>
+    <span class="eyebrow">Consent controls</span><h2>Reveal requests</h2>
     <p class="muted">Optional reveal steps require consent and only use safe mapped fields: display name, city, or selected goals summary. Email, contact info, private/admin-only answers, public profiles, and automatic reveals are not included.</p>
     <?php if ($revealedSnapshots): ?>
         <h3>Approved info visible to you</h3>
@@ -72,8 +71,8 @@
 </section>
 
 
-<section class="card">
-    <h2>Report this chat</h2>
+<section class="card safety-panel">
+    <span class="eyebrow">Safety</span><h2>Report this chat</h2>
     <details><summary>Open report form</summary>
         <form method="post" action="/reports/chat" class="grid two">
             <?= csrf_field() ?><input type="hidden" name="chat_id" value="<?= (int)$chat['id'] ?>"><input type="hidden" name="report_type" value="chat">
@@ -85,8 +84,8 @@
 </section>
 
 <?php if ($canSend): ?>
-<section class="card">
-    <h2>Send message</h2>
+<section class="card composer-card">
+    <h2>Send a message</h2>
     <form method="post" action="/chats/<?= (int)$chat['id'] ?>/messages">
         <?= csrf_field() ?>
         <label>Message<textarea name="body" rows="4" maxlength="2000" required placeholder="Write a respectful, privacy-safe message..."></textarea></label>

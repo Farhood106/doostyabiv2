@@ -79,6 +79,32 @@ views/safety/index.php
 views/setup.php
 ```
 
+
+## Product UX overview
+
+Doostyabi is designed to feel calm, private, and consent-led rather than like a public profile directory:
+
+- The public landing page explains privacy-first compatibility introductions, anonymous match cards, mutual chat, and consent-based reveals.
+- Registration and login pages reinforce that contact information and profile details are not exposed automatically.
+- Onboarding uses progress indicators, question cards, clear empty states, and validation summaries to help members complete answers at their own pace.
+- Match cards emphasize anonymous compatibility context with visual strengths, cautions, status badges, and clear but non-aggressive actions for Interested, Pass, Block, and Report.
+- Chat screens use bubble-style messages, anonymous identity labels, separated reveal/safety panels, and accessible report controls.
+- The Safety Center explains blocking, reporting, privacy, and reveal consent while listing active blocks.
+- Admin screens remain practical and table-focused, with dashboard counts for moderation workload and consistent cards, filters, and pills.
+
+### Manual visual QA checklist
+
+Review these pages on desktop and mobile widths after deployment:
+
+1. `/` — landing page hero, How it works, Privacy promise, Why it is different, and Start safely CTA.
+2. `/login` and `/register` — welcoming copy, privacy reassurance, readable validation errors, and mobile layout.
+3. `/onboarding` — progress indicator, goals area, question cards, validation summary, empty state when no steps exist, and save controls.
+4. `/matches` — empty state, anonymous card styling, compatibility label, strengths/cautions, status badges, and Interested/Pass/Block/Report controls.
+5. `/chats` and `/chats/{id}` — no-chat empty state, anonymous chat previews, bubble-style messages, reveal panel, report controls, and mobile readability.
+6. `/safety` — reassuring safety copy, active blocks table, and unblock form.
+7. `/admin` — consistent dashboard cards for users, matching, reports, flagged messages, and blocks.
+8. `/admin/moderation`, `/admin/reveals`, `/admin/chats`, `/admin/matches` — practical filters, tables, badges/pills, and escaped dynamic content.
+
 ## Setup instructions
 
 1. Create a MySQL database, for example `doostyabi`.
