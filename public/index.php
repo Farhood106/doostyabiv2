@@ -21,6 +21,8 @@ $router->post('/matches/action', [MatchController::class, 'action']);
 $router->get('/chats', [ChatController::class, 'index']);
 $router->get('/chats/{id}', [ChatController::class, 'show']);
 $router->post('/chats/{id}/messages', [ChatController::class, 'send']);
+$router->post('/chats/{id}/reveal-requests', [ChatController::class, 'requestReveal']);
+$router->post('/chats/reveal-requests/respond', [ChatController::class, 'respondReveal']);
 $router->post('/chats/messages/flag', [ChatController::class, 'flagMessage']);
 $router->get('/onboarding', [OnboardingController::class, 'show']);
 $router->post('/onboarding', [OnboardingController::class, 'save']);
@@ -47,6 +49,8 @@ $router->post('/admin/matches/recalculate', [AdminController::class, 'recalculat
 $router->get('/admin/chats', [AdminController::class, 'chats']);
 $router->get('/admin/chats/{id}', [AdminController::class, 'chatDetail']);
 $router->post('/admin/chats/{id}/close', [AdminController::class, 'closeChat']);
+$router->get('/admin/reveals', [AdminController::class, 'reveals']);
+$router->post('/admin/reveals/types', [AdminController::class, 'saveRevealType']);
 $router->get('/admin/settings', [AdminController::class, 'settings']);
 $router->post('/admin/settings', [AdminController::class, 'saveSettings']);
 $router->get('/admin/users', [AdminController::class, 'users']);

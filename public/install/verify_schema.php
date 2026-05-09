@@ -44,11 +44,14 @@ if (!$missing) {
         'messages.body' => "SHOW COLUMNS FROM messages LIKE 'body'",
         'messages.moderation_status' => "SHOW COLUMNS FROM messages LIKE 'moderation_status'",
         'chat_participants.user_id' => "SHOW COLUMNS FROM chat_participants LIKE 'user_id'",
+        'reveal_types.reveal_field_key' => "SHOW COLUMNS FROM reveal_types LIKE 'reveal_field_key'",
+        'reveal_requests.status' => "SHOW COLUMNS FROM reveal_requests LIKE 'status'",
+        'match_visibility_snapshots.viewer_user_id' => "SHOW COLUMNS FROM match_visibility_snapshots LIKE 'viewer_user_id'",
     ];
     foreach ($chatColumnChecks as $label => $sql) {
         $stmt = $pdo->query($sql);
         $found = (bool)$stmt->fetch();
-        $checks[] = install_check('Chat schema column: ' . $label, $found ? 'pass' : 'fail', $found ? 'Column found.' : 'Missing column.');
+        $checks[] = install_check('Schema column: ' . $label, $found ? 'pass' : 'fail', $found ? 'Column found.' : 'Missing column.');
     }
 
     $seedChecks = [
@@ -62,6 +65,7 @@ if (!$missing) {
         'questions' => 'SELECT COUNT(*) FROM questions WHERE deleted_at IS NULL',
         'question options' => 'SELECT COUNT(*) FROM question_options WHERE deleted_at IS NULL',
         'admin settings' => 'SELECT COUNT(*) FROM admin_settings',
+        'reveal types' => 'SELECT COUNT(*) FROM reveal_types WHERE is_active=1',
     ];
     foreach ($seedChecks as $label => $sql) {
         $count = (int)$pdo->query($sql)->fetchColumn();

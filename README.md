@@ -37,6 +37,7 @@ src/Repositories/FormRepository.php
 src/Repositories/GoalRepository.php
 src/Repositories/LocationRepository.php
 src/Repositories/MatchRepository.php
+src/Repositories/RevealRepository.php
 src/Repositories/UserRepository.php
 src/Services/AdminCatalogService.php
 src/Services/AdminSettingsService.php
@@ -56,6 +57,7 @@ views/admin/dashboard.php
 views/admin/form_builder.php
 views/admin/health.php
 views/admin/matches.php
+views/admin/reveals.php
 views/admin/settings.php
 views/admin/user_detail.php
 views/admin/users.php
@@ -96,7 +98,7 @@ views/setup.php
 6. Open phpMyAdmin, select the new database, use **Import**, and import `database/schema.sql` first.
 7. In phpMyAdmin, import `database/seeds.sql` second.
 8. Visit `/install/check.php?token=YOUR_TEMP_TOKEN` to verify PHP extensions, config loading, database connectivity, writable folders, and table existence.
-9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, chat/moderation columns, the default admin account, default password hash verification, and core seed records.
+9. Visit `/install/verify_schema.php?token=YOUR_TEMP_TOKEN` to verify required tables, chat/reveal/moderation columns, the default admin account, default password hash verification, and core seed records.
 10. Visit `/install/smoke_matching.php?token=YOUR_TEMP_TOKEN` after imports to create safe smoke users and verify the matching service can create a card.
 11. Remove `app.install_token` or set it to `null`, then delete or password-protect the `public/install` directory.
 12. Log in as `admin@example.com` / `admin123`, then immediately change the password or replace the seeded admin account.
@@ -207,6 +209,7 @@ Phase 4 adds privacy-preserving text chat for mutual matches only:
 - `chat_participants` limits each chat to the two matched members. User chat reads, sends, and flags all verify participant membership.
 - `messages` stores text-only messages. Attachments are intentionally not implemented.
 - `message_flags` stores member reports for moderation review. Flagged messages remain visible but are marked with `moderation_status = flagged`.
+- Phase 5 consent-based reveal requests let mutual chat participants request safe mapped fields only after explicit approval.
 - Chat creation is automatic when the second member chooses **Interested** and the match becomes `mutual`.
 - `/chats` lists the signed-in member's anonymous conversations. `/chats/{id}` shows a conversation and a CSRF-protected text send form only while the chat is open and the match remains mutual.
 - Blocking a match updates the match to `blocked` and closes/disables its chat so no further messages can be sent.
@@ -214,7 +217,7 @@ Phase 4 adds privacy-preserving text chat for mutual matches only:
 
 Privacy boundaries for this phase:
 
-- Chat UI does not show email addresses, contact details, private profile data, public profiles, or reveal requests.
+- Chat UI does not show email addresses, contact details, private profile data, public profiles, or automatic reveals.
 - Members are shown as anonymous matches in user-facing chat screens.
 - All output is escaped before rendering.
 
@@ -228,13 +231,45 @@ Privacy boundaries for this phase:
 6. Flag the other participant's message and verify `/admin/chats/{id}` shows the flag count/reason.
 7. As admin, close the chat with a reason; verify members can still read but cannot send.
 8. Create another mutual chat, then block the match; verify the chat becomes disabled/read-only.
-9. Confirm there are no attachment controls, reveal request controls, public profile links, email addresses, or contact details in member chat screens.
+9. Confirm there are no attachment controls, automatic reveal controls, public profile links, email addresses, or contact details in member chat screens.
 
 ### Known chat limitations
 
-- No attachments, typing indicators, read receipts UI, realtime updates, reveal requests, or public profiles.
+- No attachments, typing indicators, read receipts UI, realtime updates, automatic reveals, or public profiles.
 - Moderation is review-oriented only: users can flag messages and admins can close chats, but there is no automated abuse classifier or message hiding workflow yet.
 - Chat history is not encrypted at the application layer; rely on HTTPS in production and database/server access controls.
+
+
+## Consent-based reveal requests (Phase 5)
+
+Phase 5 adds limited, consent-based reveal steps inside open mutual-match chats:
+
+- `reveal_types` is an admin-managed catalog with title, slug, description, safe `reveal_field_key`, privacy level, mutual-approval flag, active flag, and sort order.
+- Seeded reveal fields are intentionally limited to `display_name`, `city`, and `selected_goals_summary`. Email, password data, contact information, public profiles, private answers, and admin-only answers are never revealed by these mappings.
+- `reveal_requests` records requester, target, match, chat, reveal type, status, optional request/response notes, and expiry timestamps.
+- Only participants in an open `mutual` chat can create reveal requests. Blocked or closed chats cannot create new reveal requests.
+- Requesters cannot approve their own requests; only the target participant can approve or reject a pending incoming request.
+- Approved values are copied into `match_visibility_snapshots` for the approved viewer only, so approval for one participant does not expose the same data to anyone else.
+- Member chat pages show reveal request buttons, pending incoming/outgoing requests, approve/reject controls for incoming requests, and approved revealed info visible only to that approved viewer.
+- Admins can manage reveal types and review/filter reveal requests from **Admin → Reveals**, but cannot force approval in this MVP.
+
+### Manual reveal test checklist
+
+1. Create a mutual match and verify an open chat exists.
+2. As participant A, request `Display name`, `Home city`, or `Selected goals summary` from the chat page.
+3. Verify participant A sees the request as outgoing pending and participant B sees it as incoming pending.
+4. As participant B, approve one request and reject another; verify participant A sees only the approved mapped value and the rejection status/note.
+5. Log in as a third member and verify they cannot open the chat or access reveal actions.
+6. Close the chat as admin or block the match, then verify new reveal requests cannot be created.
+7. In **Admin → Reveals**, create/edit reveal types and filter request oversight by status, type, and user.
+8. Confirm no email, contact info, passwords, raw private answers, admin-only answers, public profiles, or automatic reveals appear in the member UI.
+
+### Known reveal limitations
+
+- Expired requests have schema/status support but no scheduled expiry job yet.
+- Admin oversight is read-only for requests; forced admin approval/rejection is intentionally out of scope.
+- Only three safe mapped fields are supported initially; additional fields require explicit code-level mapping before catalog use.
+- Revealed snapshots are stored in the database for auditability and are not application-layer encrypted.
 
 ### Matching smoke test
 

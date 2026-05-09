@@ -309,6 +309,68 @@ CREATE TABLE IF NOT EXISTS message_flags (
     FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE IF NOT EXISTS reveal_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT NULL,
+    reveal_field_key VARCHAR(100) NOT NULL,
+    privacy_level ENUM('low','medium','high') NOT NULL DEFAULT 'medium',
+    requires_mutual_approval TINYINT(1) NOT NULL DEFAULT 1,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_reveal_types_active_sort (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS reveal_requests (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    requester_user_id INT NOT NULL,
+    target_user_id INT NOT NULL,
+    reveal_type_id INT NOT NULL,
+    status ENUM('pending','approved','rejected','cancelled','expired') NOT NULL DEFAULT 'pending',
+    request_message TEXT NULL,
+    response_note TEXT NULL,
+    requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    responded_at DATETIME NULL,
+    expires_at DATETIME NULL,
+    INDEX idx_reveal_requests_chat_status (chat_id, status, requested_at),
+    INDEX idx_reveal_requests_target_status (target_user_id, status, requested_at),
+    INDEX idx_reveal_requests_requester (requester_user_id, requested_at),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (requester_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reveal_type_id) REFERENCES reveal_types(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS match_visibility_snapshots (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id BIGINT NOT NULL,
+    chat_id BIGINT NOT NULL,
+    reveal_request_id BIGINT NOT NULL,
+    viewer_user_id INT NOT NULL,
+    subject_user_id INT NOT NULL,
+    reveal_type_id INT NOT NULL,
+    reveal_field_key VARCHAR(100) NOT NULL,
+    revealed_value TEXT NULL,
+    status ENUM('approved','revoked','expired') NOT NULL DEFAULT 'approved',
+    visible_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NULL,
+    UNIQUE KEY uq_visibility_request_viewer (reveal_request_id, viewer_user_id),
+    INDEX idx_visibility_viewer_chat (viewer_user_id, chat_id, status),
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (reveal_request_id) REFERENCES reveal_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reveal_type_id) REFERENCES reveal_types(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS match_scores (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     match_id BIGINT NOT NULL,

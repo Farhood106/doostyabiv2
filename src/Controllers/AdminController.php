@@ -14,6 +14,7 @@ use App\Repositories\UserRepository;
 use App\Services\AdminCatalogService;
 use App\Services\AdminSettingsService;
 use App\Repositories\MatchRepository;
+use App\Repositories\RevealRepository;
 use App\Repositories\ChatRepository;
 use App\Services\FormBuilderService;
 use App\Services\MatchService;
@@ -205,6 +206,33 @@ class AdminController
         $closed = (new ChatRepository())->closeByAdmin($id, (int)$admin['id'], (string)($_POST['reason'] ?? ''));
         \flash($closed ? 'success' : 'error', $closed ? 'Chat closed.' : 'Provide a close reason before closing chat.');
         \redirect('/admin/chats/' . $id);
+    }
+
+
+    public function reveals(): void
+    {
+        Auth::requireAdmin();
+        $repo = new RevealRepository();
+        View::render('admin/reveals', [
+            'types' => $repo->allTypes(),
+            'requests' => $repo->requestsForAdmin($_GET),
+            'filters' => $_GET,
+            'users' => (new UserRepository())->allMembers(),
+        ]);
+    }
+
+    public function saveRevealType(): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        $id = (new RevealRepository())->saveType($_POST);
+        if ($id > 0) {
+            (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'reveal_type', $id, ['title' => $_POST['title'] ?? '']);
+            \flash('success', 'Reveal type saved.');
+        } else {
+            \flash('error', 'Reveal type could not be saved. Use a title, slug, and allowed field key.');
+        }
+        \redirect('/admin/reveals');
     }
 
     public function settings(): void

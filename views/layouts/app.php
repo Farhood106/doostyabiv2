@@ -27,7 +27,7 @@ function nav_active(string $path, string $currentPath): string { return strpos($
 <?php if ($isAdmin): ?>
 <aside class="admin-sidebar">
     <div class="nav-group"><span>Overview</span><a class="<?= $currentPath === '/admin' ? 'active' : '' ?>" href="/admin">Dashboard</a></div>
-    <div class="nav-group"><span>People</span><a class="<?= nav_active('/admin/users', $currentPath) ?>" href="/admin/users">Users</a><a class="<?= nav_active('/admin/matches', $currentPath) ?>" href="/admin/matches">Matches</a><a class="<?= nav_active('/admin/chats', $currentPath) ?>" href="/admin/chats">Chats</a></div>
+    <div class="nav-group"><span>People</span><a class="<?= nav_active('/admin/users', $currentPath) ?>" href="/admin/users">Users</a><a class="<?= nav_active('/admin/matches', $currentPath) ?>" href="/admin/matches">Matches</a><a class="<?= nav_active('/admin/chats', $currentPath) ?>" href="/admin/chats">Chats</a><a class="<?= nav_active('/admin/reveals', $currentPath) ?>" href="/admin/reveals">Reveals</a></div>
     <div class="nav-group"><span>Catalogs</span><a class="<?= nav_active('/admin/catalogs', $currentPath) ?>" href="/admin/catalogs">Goals, Provinces, Cities</a></div>
     <div class="nav-group"><span>Form Builder</span><a class="<?= nav_active('/admin/forms', $currentPath) ?>" href="/admin/forms">Steps, Groups, Questions</a></div>
     <div class="nav-group"><span>System</span><a class="<?= nav_active('/admin/health', $currentPath) ?>" href="/admin/health">Health</a><a class="<?= nav_active('/admin/settings', $currentPath) ?>" href="/admin/settings">Settings</a></div>

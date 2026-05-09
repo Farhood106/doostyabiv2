@@ -101,3 +101,10 @@ INSERT INTO admin_settings (setting_key, setting_value, updated_by) VALUES
 ('registration_enabled', '1', 1),
 ('default_onboarding_redirect', '/onboarding', 1)
 ON DUPLICATE KEY UPDATE setting_value=setting_value;
+
+
+INSERT INTO reveal_types (id, title, slug, description, reveal_field_key, privacy_level, requires_mutual_approval, is_active, sort_order) VALUES
+(1, 'Display name', 'display-name', 'Reveal your member display name after mutual consent.', 'display_name', 'low', 1, 1, 10),
+(2, 'Home city', 'home-city', 'Reveal your city-level location only. Exact addresses and contact details are never included.', 'city', 'medium', 1, 1, 20),
+(3, 'Selected goals summary', 'selected-goals-summary', 'Reveal a summary of your selected relationship goals.', 'selected_goals_summary', 'medium', 1, 1, 30)
+ON DUPLICATE KEY UPDATE title=VALUES(title), description=VALUES(description), reveal_field_key=VALUES(reveal_field_key), privacy_level=VALUES(privacy_level), requires_mutual_approval=VALUES(requires_mutual_approval), is_active=VALUES(is_active), sort_order=VALUES(sort_order);
