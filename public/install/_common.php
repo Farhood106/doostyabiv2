@@ -73,17 +73,19 @@ function install_pdo(?array $config): array
         return [null, 'The PDO MySQL extension is not available.'];
     }
     $db = $config['db'];
-    foreach (['host', 'name', 'user', 'charset'] as $key) {
+    foreach (['host', 'name', 'user'] as $key) {
         if (empty($db[$key])) {
             return [null, 'Database configuration is incomplete.'];
         }
     }
     try {
-        $dsn = "mysql:host={$db['host']};dbname={$db['name']};charset={$db['charset']}";
+        $charset = 'utf8mb4';
+        $dsn = "mysql:host={$db['host']};dbname={$db['name']};charset={$charset}";
         $pdo = new PDO($dsn, $db['user'], $db['pass'] ?? '', [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
         ]);
         return [$pdo, null];
     } catch (Throwable $e) {

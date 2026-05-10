@@ -133,8 +133,8 @@ class MatchRepository
 
     public function saveCard(int $matchId, int $viewerId, int $targetId, array $card): void
     {
-        $stmt = $this->db->prepare('INSERT INTO match_cards (match_id, viewer_user_id, target_user_id, title, summary, strengths_text, cautions_text, compatibility_label, privacy_level, freshness_score, generated_payload_json) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), summary=VALUES(summary), strengths_text=VALUES(strengths_text), cautions_text=VALUES(cautions_text), compatibility_label=VALUES(compatibility_label), freshness_score=VALUES(freshness_score), generated_payload_json=VALUES(generated_payload_json)');
-        $stmt->execute([$matchId, $viewerId, $targetId, $card['title'], $card['summary'], $card['strengths'], $card['cautions'], $card['label'], 'anonymous', $card['freshness_score'] ?? 50, json_encode($card['payload'], JSON_UNESCAPED_UNICODE)]);
+        $stmt = $this->db->prepare('INSERT INTO match_cards (match_id, viewer_user_id, target_user_id, title, summary, narrative, strengths_text, cautions_text, compatibility_label, privacy_level, freshness_score, generated_payload_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), summary=VALUES(summary), narrative=VALUES(narrative), strengths_text=VALUES(strengths_text), cautions_text=VALUES(cautions_text), compatibility_label=VALUES(compatibility_label), freshness_score=VALUES(freshness_score), generated_payload_json=VALUES(generated_payload_json)');
+        $stmt->execute([$matchId, $viewerId, $targetId, $card['title'], $card['summary'], $card['narrative'] ?? $card['summary'], $card['strengths'], $card['cautions'], $card['label'], 'anonymous', $card['freshness_score'] ?? 50, json_encode($card['payload'], JSON_UNESCAPED_UNICODE)]);
     }
 
     public function cardsForUser(int $userId, bool $showLowConfidence = true): array

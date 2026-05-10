@@ -14,6 +14,7 @@ class MatchCardService
         return [
             'title' => $this->title($tone),
             'summary' => $this->summary($tone, $confidence),
+            'narrative' => $this->narrative($tone, $confidence, $strengths, $caution),
             'strengths' => implode("\n", $strengths),
             'cautions' => $caution,
             'label' => $this->label($tone),
@@ -71,6 +72,12 @@ class MatchCardService
         return $opening . ' ' . $this->confidenceSentence($confidence);
     }
 
+
+    private function narrative(string $tone, float $confidence, array $strengths, string $caution): string
+    {
+        return $this->summary($tone, $confidence) . "\n" . implode("\n", $strengths) . "\n" . $caution;
+    }
+
     private function confidenceSentence(float $confidence): string
     {
         if ($confidence < 45) { return 'برای دقیق‌تر شدن معرفی‌ها، چند پاسخ بیشتر در شناخت‌نامه کمک‌کننده است.'; }
@@ -87,7 +94,7 @@ class MatchCardService
 
     private function lines(string $text, int $limit, array $fallback): array
     {
-        $lines = array_values(array_filter(array_map('trim', preg_split('/\R+/', $text) ?: [])));
+        $lines = array_values(array_filter(array_map('trim', preg_split('/\R+/u', $text) ?: [])));
         return array_slice($lines ?: $fallback, 0, $limit);
     }
 }
