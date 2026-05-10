@@ -24,6 +24,9 @@ class AdminSettingsRepository
             'site_status' => 'active',
             'registration_enabled' => '1',
             'default_onboarding_redirect' => '/onboarding',
+            'minimum_required_answers_before_matching' => '3',
+            'max_optional_questions_per_step' => '3',
+            'show_low_confidence_matches' => '1',
         ];
     }
 

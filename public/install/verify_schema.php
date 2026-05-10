@@ -49,11 +49,53 @@ if (!$missing) {
         'match_visibility_snapshots.viewer_user_id' => "SHOW COLUMNS FROM match_visibility_snapshots LIKE 'viewer_user_id'",
         'reports.status' => "SHOW COLUMNS FROM reports LIKE 'status'",
         'reports.priority' => "SHOW COLUMNS FROM reports LIKE 'priority'",
+        'users.profile_quality_score' => "SHOW COLUMNS FROM users LIKE 'profile_quality_score'",
+        'users.trust_score' => "SHOW COLUMNS FROM users LIKE 'trust_score'",
+        'users.trust_flags_json' => "SHOW COLUMNS FROM users LIKE 'trust_flags_json'",
+        'users.quality_flags_json' => "SHOW COLUMNS FROM users LIKE 'quality_flags_json'",
+        'users.moderation_signals_json' => "SHOW COLUMNS FROM users LIKE 'moderation_signals_json'",
+        'match_cards.narrative' => "SHOW COLUMNS FROM match_cards LIKE 'narrative'",
+        'match_cards.last_shown_at' => "SHOW COLUMNS FROM match_cards LIKE 'last_shown_at'",
+        'match_cards.shown_count' => "SHOW COLUMNS FROM match_cards LIKE 'shown_count'",
+        'match_cards.hidden_until' => "SHOW COLUMNS FROM match_cards LIKE 'hidden_until'",
+        'match_cards.freshness_score' => "SHOW COLUMNS FROM match_cards LIKE 'freshness_score'",
+        'user_onboarding_progress.skipped_optional_count' => "SHOW COLUMNS FROM user_onboarding_progress LIKE 'skipped_optional_count'",
+        'user_onboarding_progress.engagement_metadata_json' => "SHOW COLUMNS FROM user_onboarding_progress LIKE 'engagement_metadata_json'",
     ];
     foreach ($chatColumnChecks as $label => $sql) {
         $stmt = $pdo->query($sql);
         $found = (bool)$stmt->fetch();
         $checks[] = install_check('Schema column: ' . $label, $found ? 'pass' : 'fail', $found ? 'Column found.' : 'Missing column.');
+    }
+
+    $tablesToCheck = install_expected_tables();
+    $tableStmt = $pdo->prepare('SELECT TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1');
+    foreach ($tablesToCheck as $tableName) {
+        $tableStmt->execute([$tableName]);
+        $collation = (string)($tableStmt->fetchColumn() ?: '');
+        $isUtf8mb4 = str_starts_with(strtolower($collation), 'utf8mb4_');
+        $checks[] = install_check('Table charset: ' . $tableName, $isUtf8mb4 ? 'pass' : 'warn', $isUtf8mb4 ? $collation : ($collation ? "Expected utf8mb4, found {$collation}. Run database/migrations/convert_to_utf8mb4.sql." : 'Table collation unavailable.'));
+    }
+
+    $textColumnChecks = [
+        'match_cards.strengths_text' => ['match_cards', 'strengths_text'],
+        'match_cards.cautions_text' => ['match_cards', 'cautions_text'],
+        'match_cards.narrative' => ['match_cards', 'narrative'],
+        'messages.body' => ['messages', 'body'],
+        'reports.report_reason' => ['reports', 'report_reason'],
+        'user_answers.answer_text' => ['user_answers', 'answer_text'],
+    ];
+    $columnStmt = $pdo->prepare('SELECT DATA_TYPE, CHARACTER_SET_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1');
+    foreach ($textColumnChecks as $label => [$tableName, $columnName]) {
+        $columnStmt->execute([$tableName, $columnName]);
+        $column = $columnStmt->fetch();
+        if (!$column) {
+            $checks[] = install_check('Text column encoding: ' . $label, 'fail', 'Column missing.');
+            continue;
+        }
+        $typeOk = in_array(strtolower((string)$column['DATA_TYPE']), ['varchar', 'text', 'mediumtext', 'longtext'], true);
+        $charsetOk = strtolower((string)($column['CHARACTER_SET_NAME'] ?? '')) === 'utf8mb4';
+        $checks[] = install_check('Text column encoding: ' . $label, ($typeOk && $charsetOk) ? 'pass' : 'warn', ($typeOk && $charsetOk) ? (($column['DATA_TYPE'] ?? '') . ' / ' . ($column['COLLATION_NAME'] ?? '')) : 'Expected VARCHAR/TEXT with utf8mb4. Run database/migrations/convert_to_utf8mb4.sql.');
     }
 
     $seedChecks = [

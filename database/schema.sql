@@ -1,15 +1,19 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET collation_connection = utf8mb4_unicode_ci;
+ALTER DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     label VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS permissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     label VARCHAR(150) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id INT NOT NULL,
@@ -17,7 +21,7 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     PRIMARY KEY (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,11 +34,20 @@ CREATE TABLE IF NOT EXISTS users (
     birthdate DATE NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     email_verified_at DATETIME NULL,
+    profile_quality_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    profile_quality_level VARCHAR(40) NOT NULL DEFAULT 'not_ready',
+    last_quality_calculated_at DATETIME NULL,
+    trust_score DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+    trust_level VARCHAR(40) NOT NULL DEFAULT 'new',
+    trust_flags_json LONGTEXT NULL,
+    quality_flags_json LONGTEXT NULL,
+    moderation_signals_json LONGTEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_role_created (role_id, created_at),
+    INDEX idx_users_quality_trust (profile_quality_score, trust_score),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS goals (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -44,7 +57,7 @@ CREATE TABLE IF NOT EXISTS goals (
     sort_order INT NOT NULL DEFAULT 0,
     deleted_at DATETIME NULL,
     INDEX idx_goals_active_sort (is_active, deleted_at, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user_goals (
     user_id INT NOT NULL,
@@ -53,7 +66,7 @@ CREATE TABLE IF NOT EXISTS user_goals (
     INDEX idx_user_goals_goal (goal_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS provinces (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,7 +76,7 @@ CREATE TABLE IF NOT EXISTS provinces (
     sort_order INT NOT NULL DEFAULT 0,
     deleted_at DATETIME NULL,
     INDEX idx_provinces_active_sort (is_active, deleted_at, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS cities (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -74,7 +87,7 @@ CREATE TABLE IF NOT EXISTS cities (
     deleted_at DATETIME NULL,
     INDEX idx_cities_province_active (province_id, is_active, deleted_at, sort_order),
     FOREIGN KEY (province_id) REFERENCES provinces(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS form_steps (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -84,7 +97,7 @@ CREATE TABLE IF NOT EXISTS form_steps (
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     deleted_at DATETIME NULL,
     INDEX idx_form_steps_active_sort (is_active, deleted_at, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS question_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,7 +109,7 @@ CREATE TABLE IF NOT EXISTS question_groups (
     deleted_at DATETIME NULL,
     INDEX idx_question_groups_step_active (form_step_id, is_active, deleted_at, sort_order),
     FOREIGN KEY (form_step_id) REFERENCES form_steps(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -125,7 +138,7 @@ CREATE TABLE IF NOT EXISTS questions (
     INDEX idx_questions_group_active (question_group_id, is_active, deleted_at, sort_order),
     INDEX idx_questions_match_card (show_in_match_card, match_card_priority),
     FOREIGN KEY (question_group_id) REFERENCES question_groups(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS question_options (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -138,7 +151,7 @@ CREATE TABLE IF NOT EXISTS question_options (
     deleted_at DATETIME NULL,
     INDEX idx_question_options_question_active (question_id, is_active, deleted_at, sort_order),
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user_answers (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -154,7 +167,7 @@ CREATE TABLE IF NOT EXISTS user_answers (
     INDEX idx_user_answers_question (question_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user_answer_options (
     user_answer_id INT NOT NULL,
@@ -163,7 +176,7 @@ CREATE TABLE IF NOT EXISTS user_answer_options (
     INDEX idx_user_answer_options_option (question_option_id),
     FOREIGN KEY (user_answer_id) REFERENCES user_answers(id) ON DELETE CASCADE,
     FOREIGN KEY (question_option_id) REFERENCES question_options(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user_answer_cities (
     user_answer_id INT NOT NULL,
@@ -172,18 +185,23 @@ CREATE TABLE IF NOT EXISTS user_answer_cities (
     INDEX idx_user_answer_cities_city (city_id),
     FOREIGN KEY (user_answer_id) REFERENCES user_answers(id) ON DELETE CASCADE,
     FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user_onboarding_progress (
     user_id INT PRIMARY KEY,
     current_step_id INT NULL,
     completed_steps INT NOT NULL DEFAULT 0,
     is_complete TINYINT(1) NOT NULL DEFAULT 0,
+    skipped_optional_count INT NOT NULL DEFAULT 0,
+    fatigue_score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    engagement_metadata_json LONGTEXT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_onboarding_complete (is_complete),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (current_step_id) REFERENCES form_steps(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -197,7 +215,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_audit_entity (entity_type, entity_id),
     INDEX idx_audit_admin_created (admin_user_id, created_at),
     FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 CREATE TABLE IF NOT EXISTS admin_settings (
@@ -206,7 +224,7 @@ CREATE TABLE IF NOT EXISTS admin_settings (
     updated_by INT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 CREATE TABLE IF NOT EXISTS blocks (
@@ -222,7 +240,7 @@ CREATE TABLE IF NOT EXISTS blocks (
     INDEX idx_blocks_blocked (blocked_user_id, deleted_at),
     FOREIGN KEY (blocker_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_recommendation_queue (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -236,7 +254,7 @@ CREATE TABLE IF NOT EXISTS match_recommendation_queue (
     INDEX idx_match_queue_status (status, run_after, id),
     UNIQUE KEY uq_match_queue_user_status (user_id, status),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS matches (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -253,7 +271,7 @@ CREATE TABLE IF NOT EXISTS matches (
     INDEX idx_matches_user_two (user_two_id, match_status),
     FOREIGN KEY (user_one_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user_two_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 CREATE TABLE IF NOT EXISTS chats (
@@ -269,7 +287,7 @@ CREATE TABLE IF NOT EXISTS chats (
     INDEX idx_chats_status_updated (status, updated_at),
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
     FOREIGN KEY (closed_by_admin_user_id) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS chat_participants (
     chat_id BIGINT NOT NULL,
@@ -280,7 +298,7 @@ CREATE TABLE IF NOT EXISTS chat_participants (
     INDEX idx_chat_participants_user (user_id, chat_id),
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS messages (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -295,7 +313,7 @@ CREATE TABLE IF NOT EXISTS messages (
     INDEX idx_messages_moderation (moderation_status, created_at),
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS message_flags (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -307,7 +325,7 @@ CREATE TABLE IF NOT EXISTS message_flags (
     INDEX idx_message_flags_reporter (reporter_user_id, created_at),
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
     FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -338,7 +356,7 @@ CREATE TABLE IF NOT EXISTS reports (
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE SET NULL,
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE SET NULL,
     FOREIGN KEY (assigned_admin_id) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS reveal_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -353,7 +371,7 @@ CREATE TABLE IF NOT EXISTS reveal_types (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_reveal_types_active_sort (is_active, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS reveal_requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -376,7 +394,7 @@ CREATE TABLE IF NOT EXISTS reveal_requests (
     FOREIGN KEY (requester_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reveal_type_id) REFERENCES reveal_types(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_visibility_snapshots (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -399,19 +417,19 @@ CREATE TABLE IF NOT EXISTS match_visibility_snapshots (
     FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (subject_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reveal_type_id) REFERENCES reveal_types(id) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_scores (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     match_id BIGINT NOT NULL,
-    score_type ENUM('goal_fit','location_fit','answer_fit','boundary_fit','confidence','penalty') NOT NULL,
+    score_type ENUM('goal_fit','location_fit','answer_fit','boundary_fit','freshness_readiness','confidence','penalty') NOT NULL,
     score_value DECIMAL(6,2) NOT NULL DEFAULT 0.00,
     weight DECIMAL(6,2) NOT NULL DEFAULT 1.00,
     details TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_match_scores_match (match_id, score_type),
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_explanations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -423,7 +441,7 @@ CREATE TABLE IF NOT EXISTS match_explanations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_match_explanations_match (match_id),
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_cards (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -432,19 +450,25 @@ CREATE TABLE IF NOT EXISTS match_cards (
     target_user_id INT NOT NULL,
     title VARCHAR(180) NOT NULL,
     summary TEXT NULL,
+    narrative TEXT NULL,
     strengths_text TEXT NULL,
     cautions_text TEXT NULL,
     compatibility_label VARCHAR(80) NOT NULL,
     privacy_level VARCHAR(40) NOT NULL DEFAULT 'anonymous',
+    last_shown_at DATETIME NULL,
+    shown_count INT NOT NULL DEFAULT 0,
+    hidden_until DATETIME NULL,
+    freshness_score DECIMAL(5,2) NOT NULL DEFAULT 50.00,
     generated_payload_json LONGTEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_match_cards_viewer (match_id, viewer_user_id),
     INDEX idx_match_cards_viewer (viewer_user_id, privacy_level),
+    INDEX idx_match_cards_freshness (viewer_user_id, hidden_until, freshness_score, last_shown_at),
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
     FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS match_actions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -458,4 +482,4 @@ CREATE TABLE IF NOT EXISTS match_actions (
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
     FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

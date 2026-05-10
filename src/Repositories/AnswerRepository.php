@@ -88,9 +88,9 @@ class AnswerRepository
         return $stmt->fetch() ?: null;
     }
 
-    public function updateProgress(int $userId, ?int $currentStepId, int $completedSteps, bool $complete): void
+    public function updateProgress(int $userId, ?int $currentStepId, int $completedSteps, bool $complete, int $skippedOptional = 0, float $fatigueScore = 0.0, array $metadata = []): void
     {
-        $stmt = $this->db->prepare('INSERT INTO user_onboarding_progress (user_id,current_step_id,completed_steps,is_complete) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE current_step_id=VALUES(current_step_id), completed_steps=VALUES(completed_steps), is_complete=VALUES(is_complete)');
-        $stmt->execute([$userId, $currentStepId, $completedSteps, $complete ? 1 : 0]);
+        $stmt = $this->db->prepare('INSERT INTO user_onboarding_progress (user_id,current_step_id,completed_steps,is_complete,skipped_optional_count,fatigue_score,started_at,completed_at,engagement_metadata_json) VALUES (?,?,?,?,?,?,NOW(),?,?) ON DUPLICATE KEY UPDATE current_step_id=VALUES(current_step_id), completed_steps=VALUES(completed_steps), is_complete=VALUES(is_complete), skipped_optional_count=VALUES(skipped_optional_count), fatigue_score=VALUES(fatigue_score), completed_at=IF(VALUES(is_complete)=1 AND completed_at IS NULL, NOW(), completed_at), engagement_metadata_json=VALUES(engagement_metadata_json)');
+        $stmt->execute([$userId, $currentStepId, $completedSteps, $complete ? 1 : 0, $skippedOptional, $fatigueScore, $complete ? date('Y-m-d H:i:s') : null, json_encode($metadata, JSON_UNESCAPED_UNICODE)]);
     }
 }

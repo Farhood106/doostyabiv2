@@ -415,3 +415,145 @@ SELECT id, 'admin@example.com', 'PASTE_HASH_HERE', 'Admin', 1 FROM roles WHERE n
 - **Tables missing on System Health:** import `database/schema.sql`, then `database/seeds.sql`.
 - **Invalid CSRF token:** refresh the form page and resubmit; also verify PHP sessions are working and cookies are enabled.
 - **Cannot write logs:** update permissions or ownership for `storage/logs` so the PHP process can write there.
+
+## Persian localization and RTL UX (Phase 7.5)
+
+Phase 7.5 makes the product Persian-first while keeping the existing shared-hosting PHP/MySQL architecture and without adding new product features.
+
+### Localization approach
+
+- The application shell uses `lang="fa"` and `dir="rtl"` so browsers, forms, tables, assistive technologies, and mobile layouts treat the UI as Persian/RTL by default.
+- User-facing screens are written in natural Persian instead of direct word-for-word translation. The tone is intentionally calm, respectful, privacy-safe, and non-judgmental.
+- Matching language avoids harsh dating-app wording. For example, user actions use softer Persian phrasing such as «مایلم بیشتر بدانم» and «فعلاً نه».
+- Statuses, privacy levels, answer types, report reasons, reveal directions, and moderation labels are mapped through a small helper (`fa_label`) so technical enum values are not shown raw to members or admins.
+- Validation and flash messages are friendly Persian messages and avoid exposing technical details where possible.
+- Seed data has Persian defaults for roles, permissions, goals, Iranian-style locations, onboarding steps, questions, options, and reveal types so fresh installs start with Persian content.
+
+### RTL and typography considerations
+
+- CSS uses logical/right-side spacing for cards, onboarding panels, safety panels, admin stat cards, and chat previews.
+- Admin navigation is anchored to the right side and content margins are mirrored for RTL.
+- Tables use right-aligned headers/cells with horizontal overflow for small screens.
+- Forms and textareas default to RTL alignment, while email, password, slug, country-code, and code fields stay LTR for readability.
+- Chat bubbles are mirrored for RTL: the current member’s messages align to the left and the other member’s messages align to the right, with Persian-friendly line-height and timestamp spacing.
+- Typography uses a Persian font fallback stack: `Vazirmatn`, `IRANSans`, `Shabnam`, `Tahoma`, `Segoe UI`, Arial, and generic sans-serif. This keeps text readable even on shared hosting without requiring bundled font files.
+- Mobile breakpoints preserve RTL flow by stacking navigation, cards, form grids, and chat headers while keeping message bubbles readable.
+
+### Manual RTL visual QA checklist
+
+1. Open the landing page and verify the hero, CTA buttons, privacy promise cards, and lists read right-to-left with comfortable Persian line spacing.
+2. Open login and registration pages on desktop and mobile widths; verify labels, placeholders, error messages, and email/password direction are correct.
+3. Complete onboarding and verify steps, progress, goal chips, dynamic fields, required errors, and save panels are RTL-friendly.
+4. Review match cards and verify score, status pills, action buttons, report form, strengths, and caution sections are aligned and worded naturally.
+5. Open chat list and chat detail pages; verify bubbles, timestamps, reveal request cards, report controls, and composer textarea are readable in Persian.
+6. Open the safety center and verify privacy reminders, active block table, and unblock action are RTL-friendly.
+7. Open admin dashboard, users, matches, chats, moderation, reveal management, catalogs, settings, health, and form builder pages; verify sidebar, tables, statuses, badges, and form terminology are Persian.
+8. Resize to mobile width and verify the admin sidebar, tables, cards, forms, chat bubbles, and buttons do not break RTL layout.
+9. Confirm no public profile links, automatic contact reveals, or heavy frontend frameworks were introduced.
+
+## Match intelligence foundations (Phase 8.1)
+
+Phase 8.1 adds explainable, privacy-first intelligence signals for match quality, freshness, trust, and moderation readiness. It does **not** add public profiles, AI APIs, external scoring services, or automatic bans.
+
+### Profile quality philosophy
+
+Profile quality is a product-readiness signal, not a judgment about a person. The score is calculated from practical, explainable inputs:
+
+- onboarding completion and required-answer coverage;
+- number of meaningful matchable answers;
+- answer type diversity;
+- active relationship goals;
+- profile freshness;
+- optional reveal participation;
+- non-spam and low-moderation-risk behavior.
+
+Members see only a gentle completeness-style summary that helps them improve their own profile. Admins can see quality levels and flags for moderation and support.
+
+### Trust scoring philosophy
+
+Trust score is an internal safety and quality signal. It considers account age, onboarding progress, message/report behavior, reveal response behavior, rapid pass/interest/block patterns, and spam indicators. Trust flags are intended for calm review and ranking decisions only; they should not be exposed to members as raw calculations.
+
+### Explainable matching and freshness
+
+Match explanations should sound tentative and human. They should describe observable compatibility signals such as overlapping expectations, similar communication pace, compatible comfort boundaries, or shared preferences. The UI avoids deterministic wording such as “perfect match.”
+
+Match cards now track freshness metadata (`last_shown_at`, `shown_count`, `hidden_until`, `freshness_score`) so stale cards can be deprioritized and repeatedly ignored cards can rotate out for a while.
+
+### Anti-spam approach
+
+The MVP detects soft signals such as repetitive onboarding text, very low matchable answer coverage, rapid action bursts, high block/report patterns, and flagged messages. These signals lower profile quality or trust and become visible to admins. They do not automatically ban, hide, or punish members.
+
+### Adaptive onboarding preparation
+
+The schema now stores onboarding fatigue and engagement metadata, including skipped optional question counts and timing fields. Full adaptive onboarding is intentionally not implemented yet; these fields prepare the product for future tuning without changing the current form flow.
+
+### Emotional UX guidelines
+
+- Use calm labels such as «آشنایی امیدوارکننده»، «احتمال گفت‌وگوی راحت»، «سازگاری اولیه خوب» and «نیازمند شناخت بیشتر».
+- Prefer “initial signal” language over certainty.
+- Keep member-facing explanations supportive and non-judgmental.
+- Keep internal trust and moderation signals inside admin-only views.
+
+### Manual intelligence QA checklist
+
+1. Create one sparse profile and one complete profile; run matching and verify profile quality scores differ.
+2. Add repeated text answers to a test profile and verify a low-quality/repetitive-text signal appears in Admin → Intelligence.
+3. Submit many rapid pass/interest actions and verify trust flags or moderation signals change after recalculation.
+4. Submit report/message-flag actions and verify trust/moderation signals are lower for affected accounts.
+5. Open `/matches` repeatedly and verify `shown_count`, `last_shown_at`, and freshness ordering update in the database.
+6. Verify low-confidence cards use gentle wording and do not claim certainty.
+7. Verify members do not see raw trust flags, trust formulas, report counts, or moderation signal JSON.
+8. Verify Admin → Intelligence shows profile quality, trust overview, suspicious indicators, onboarding fatigue, and low-quality onboarding signals.
+
+### Known limitations
+
+- Scores are heuristic and intentionally simple for shared hosting.
+- There is no scheduled background recalculation job yet; scores update during key actions and admin intelligence review.
+- Existing installations must apply the new schema columns before using Phase 8.1 pages.
+- Freshness rotation is database-driven and not a real-time recommender system.
+
+### Phase 8.1 hardening notes
+
+- Match score persistence includes the `freshness_readiness` score type so generated score breakdowns align with the database enum and do not fail during matching.
+- Profile quality flags now distinguish repetitive text, very low-content completion, and high optional-question fatigue to make low-quality onboarding easier for admins to spot without public exposure.
+- Trust signals now include blocks received and repetitive/very short message patterns alongside rapid pass/interest behavior, reports, and flagged messages. These remain review signals only and never trigger automatic bans.
+- Card rotation hides repeatedly ignored stale cards for a short cooldown and records freshness/show counts in the Admin Intelligence low-confidence table, helping admins verify stale cards are rotating.
+- Onboarding engagement metadata preserves submit count and timing-derived fields (`seconds_since_start`, `seconds_since_last_update`, `average_seconds_per_answer`) as infrastructure for future adaptive onboarding.
+
+## Adaptive onboarding and human narratives (Phase 8.2)
+
+Phase 8.2 keeps the product privacy-first and shared-hosting friendly while making the onboarding and match-card experience calmer.
+
+### Adaptive onboarding behavior
+
+- The onboarding page now uses existing progress and engagement metadata to reduce fatigue: required questions remain visible, but only a configurable number of fresh optional questions is shown per step.
+- Optional questions can be left blank and answered later; the UI explicitly says «بعداً پاسخ می‌دهم» in tone, without pressuring members to complete everything at once.
+- Unanswered questions are prioritized by required status, matchability, match weight, privacy/safety relevance, and whether they are already answered.
+- Members see friendly quality guidance such as «شناخت‌نامه شما هنوز جای کامل‌تر شدن دارد» and «با چند پاسخ بیشتر، معرفی‌ها دقیق‌تر می‌شوند» rather than raw trust internals.
+- Admins can configure `minimum_required_answers_before_matching`, `max_optional_questions_per_step`, and `show_low_confidence_matches` from Admin → Settings.
+
+### Human match narrative style
+
+- Match cards now use one calm opening sentence, two or three human-readable strengths, and one gentle caution.
+- Low-confidence cards explain that more answers are needed for a clearer introduction; they do not frame the member or the match as bad.
+- Card tone is stored in the generated payload as `hopeful`, `cautious`, `exploratory`, or `strong_initial_fit` and displayed with Persian labels such as «شروعی امیدوارکننده» and «سازگاری اولیه قابل توجه».
+- Match narratives continue to avoid public profiles, private-answer exposure, deterministic claims, or external AI services.
+
+### Phase 8.2 manual QA checklist
+
+1. Set Admin → Settings → maximum optional questions per step to a low number and confirm onboarding shows required questions plus fewer optional questions.
+2. Leave optional questions blank, submit onboarding, and confirm the form saves without treating optional blanks as errors.
+3. Confirm help text appears behind «چرا این سؤال مهم است؟» where help text exists.
+4. Compare a sparse profile and a complete profile; sparse users should see softer incomplete guidance and complete users should see richer match narratives.
+5. Disable low-confidence matches and confirm cards below the configured confidence threshold do not appear in the member match list.
+6. Verify match cards contain only anonymous narratives and do not expose private answers, names, emails, contact details, or raw trust calculations.
+
+### Phase 8.2 known limitations
+
+- Adaptive onboarding is still page-based; it does not yet provide a fully step-by-step wizard or client-side personalization.
+- Admin controls are global settings, not per-segment experiments.
+- Human narratives are deterministic templates from local match signals, not generated by external AI.
+
+## UTF-8 / Persian storage requirement
+
+The application requires MySQL `utf8mb4` end-to-end for Persian text and Unicode match narratives. Fresh installs set `SET NAMES utf8mb4`, alter the selected database default to `utf8mb4_unicode_ci`, and create tables with `DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`. Existing installations should run `database/migrations/convert_to_utf8mb4.sql` once before saving Persian match-card text.

@@ -1,35 +1,35 @@
 <section class="hero product-hero">
     <div class="hero-copy">
-        <span class="eyebrow">Private compatibility introductions</span>
-        <h1>Meet thoughtfully, not publicly.</h1>
-        <p class="lead">Doostyabi helps members build a private compatibility profile, receive anonymous match cards, and move forward only when interest and consent are mutual.</p>
-        <div class="actions"><a class="button large" href="/register">Start safely</a><a class="button secondary large" href="/login">I already have an account</a></div>
-        <p class="trust-note">No public profiles. No contact info exposed. No reveal without approval.</p>
+        <span class="eyebrow">معرفی خصوصی بر پایه سازگاری</span>
+        <h1>آرام و محترمانه آشنا شوید؛ نه در معرض عموم.</h1>
+        <p class="lead">دوستیابی کمک می‌کند یک شناخت‌نامه خصوصی بسازید، معرفی‌های ناشناس و قابل‌فهم دریافت کنید و فقط وقتی هر دو نفر مایل بودند، گفت‌وگو را ادامه دهید.</p>
+        <div class="actions"><a class="button large" href="/register">شروع امن و خصوصی</a><a class="button secondary large" href="/login">قبلاً حساب ساخته‌ام</a></div>
+        <p class="trust-note">بدون پروفایل عمومی، بدون نمایش اطلاعات تماس، و بدون نمایش جزئیات مگر با تأیید شما.</p>
     </div>
     <div class="hero-panel card">
-        <div class="mini-card"><span class="pill">Anonymous card</span><strong>High values alignment</strong><p>Shared goals, compatible preferences, and clear cautions before anyone is identified.</p></div>
-        <div class="mini-card muted-card"><span class="pill">Consent step</span><strong>Chat and reveal only after mutual interest</strong></div>
+        <div class="mini-card"><span class="pill">کارت ناشناس</span><strong>هم‌سویی ارزش‌ها و هدف‌ها</strong><p>نقطه‌های مشترک، موارد نیازمند گفت‌وگو و برآورد سازگاری پیش از مشخص شدن هویت نمایش داده می‌شود.</p></div>
+        <div class="mini-card muted-card"><span class="pill">مرحله رضایت</span><strong>گفت‌وگو و نمایش اطلاعات فقط با علاقه و رضایت دوطرفه</strong></div>
     </div>
 </section>
 
-<section class="section-title"><div><span class="eyebrow">How it works</span><h2>From private profile to mutual conversation</h2></div></section>
+<section class="section-title"><div><span class="eyebrow">مسیر کار</span><h2>از شناخت خصوصی تا گفت‌وگوی دوطرفه</h2></div></section>
 <section class="grid three feature-grid">
-    <article class="card feature-card"><span class="feature-icon">1</span><h2>Build privately</h2><p>Answer guided onboarding questions. Sensitive answers support compatibility but are not displayed as a public profile.</p></article>
-    <article class="card feature-card"><span class="feature-icon">2</span><h2>Review anonymous matches</h2><p>See strengths, cautions, and compatibility context without names, email addresses, or contact details.</p></article>
-    <article class="card feature-card"><span class="feature-icon">3</span><h2>Move by consent</h2><p>Chat opens after mutual interest. Limited reveal requests require approval and show only safe mapped fields.</p></article>
+    <article class="card feature-card"><span class="feature-icon">۱</span><h2>شناخت‌نامه را خصوصی بسازید</h2><p>به پرسش‌های راهنما پاسخ دهید. پاسخ‌های حساس فقط برای سازگاری استفاده می‌شوند و پروفایل عمومی نمی‌سازند.</p></article>
+    <article class="card feature-card"><span class="feature-icon">۲</span><h2>معرفی‌های ناشناس را ببینید</h2><p>نقاط قوت، نکته‌های قابل‌تأمل و زمینه سازگاری را بدون نام، ایمیل یا اطلاعات تماس مرور کنید.</p></article>
+    <article class="card feature-card"><span class="feature-icon">۳</span><h2>با رضایت جلو بروید</h2><p>گفت‌وگو پس از علاقه دوطرفه باز می‌شود. نمایش نام، شهر یا خلاصه هدف‌ها فقط با درخواست و تأیید انجام می‌شود.</p></article>
 </section>
 
 <section class="card promise-card">
-    <div><span class="eyebrow">Privacy promise</span><h2>Designed for trust from the first click.</h2></div>
+    <div><span class="eyebrow">تعهد حریم خصوصی</span><h2>اعتماد از همان کلیک اول طراحی شده است.</h2></div>
     <div class="grid two">
-        <p><strong>No public browsing.</strong><br>Members are not presented as public profiles for anyone to search.</p>
-        <p><strong>Anonymous by default.</strong><br>Match cards focus on compatibility signals, not personal contact details.</p>
-        <p><strong>Consent before reveal.</strong><br>Display name, city, and goals summary can be shared only through an approved reveal request.</p>
-        <p><strong>Safety controls.</strong><br>Blocking, reporting, and moderation tools are available throughout the member journey.</p>
+        <p><strong>بدون جست‌وجوی عمومی.</strong><br>اعضا مثل پروفایل‌های عمومی برای جست‌وجوی دیگران نمایش داده نمی‌شوند.</p>
+        <p><strong>ناشناس به‌صورت پیش‌فرض.</strong><br>کارت‌ها روی نشانه‌های سازگاری تمرکز دارند، نه اطلاعات تماس یا جزئیات شخصی.</p>
+        <p><strong>رضایت پیش از نمایش.</strong><br>نام نمایشی، شهر و خلاصه هدف‌ها فقط با تأیید درخواست نمایش داده می‌شوند.</p>
+        <p><strong>کنترل‌های امنیتی.</strong><br>مسدودسازی، گزارش و ابزارهای رسیدگی در مسیر استفاده در دسترس هستند.</p>
     </div>
 </section>
 
 <section class="grid two">
-    <article class="card"><h2>Why it is different</h2><ul class="soft-list"><li>Compatibility-first workflow instead of public swiping.</li><li>Explainable match cards with strengths and cautions.</li><li>Private chats after mutual interest only.</li><li>Reports and blocks built into the product experience.</li></ul></article>
-    <article class="card cta-card"><h2>Ready to begin carefully?</h2><p>Create a profile at your pace. You decide when to show interest, chat, or approve a reveal.</p><a class="button large" href="/register">Create your private account</a></article>
+    <article class="card"><h2>تفاوت رویکرد ما</h2><ul class="soft-list"><li>سازگاری‌محور به‌جای مرور عمومی و شتاب‌زده.</li><li>کارت‌های قابل‌توضیح با نقاط قوت و موارد قابل‌گفت‌وگو.</li><li>گفت‌وگوی خصوصی فقط پس از علاقه دوطرفه.</li><li>گزارش و مسدودسازی بخشی از تجربه اصلی محصول است.</li></ul></article>
+    <article class="card cta-card"><h2>آماده‌اید با آرامش شروع کنید؟</h2><p>شناخت‌نامه را با سرعت خودتان کامل کنید. انتخاب با شماست که چه زمانی علاقه نشان دهید، گفت‌وگو کنید یا درخواستی را تأیید کنید.</p><a class="button large" href="/register">ساخت حساب خصوصی</a></article>
 </section>

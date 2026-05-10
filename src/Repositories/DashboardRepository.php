@@ -22,6 +22,8 @@ class DashboardRepository
             'open_reports' => (int)$this->db->query("SELECT COUNT(*) FROM reports WHERE status IN ('open','reviewing')")->fetchColumn(),
             'flagged_messages' => (int)$this->db->query("SELECT COUNT(*) FROM messages WHERE moderation_status='flagged' AND deleted_at IS NULL")->fetchColumn(),
             'blocked_pairs' => (int)$this->db->query('SELECT COUNT(*) FROM blocks WHERE deleted_at IS NULL')->fetchColumn(),
+            'low_quality_profiles' => (int)$this->db->query("SELECT COUNT(*) FROM users u JOIN roles r ON r.id=u.role_id WHERE r.name='user' AND u.profile_quality_score < 45")->fetchColumn(),
+            'trust_watch' => (int)$this->db->query("SELECT COUNT(*) FROM users u JOIN roles r ON r.id=u.role_id WHERE r.name='user' AND u.trust_level IN ('watch','low')")->fetchColumn(),
         ];
     }
 }
