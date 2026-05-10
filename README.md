@@ -450,3 +450,64 @@ Phase 7.5 makes the product Persian-first while keeping the existing shared-host
 7. Open admin dashboard, users, matches, chats, moderation, reveal management, catalogs, settings, health, and form builder pages; verify sidebar, tables, statuses, badges, and form terminology are Persian.
 8. Resize to mobile width and verify the admin sidebar, tables, cards, forms, chat bubbles, and buttons do not break RTL layout.
 9. Confirm no public profile links, automatic contact reveals, or heavy frontend frameworks were introduced.
+
+## Match intelligence foundations (Phase 8.1)
+
+Phase 8.1 adds explainable, privacy-first intelligence signals for match quality, freshness, trust, and moderation readiness. It does **not** add public profiles, AI APIs, external scoring services, or automatic bans.
+
+### Profile quality philosophy
+
+Profile quality is a product-readiness signal, not a judgment about a person. The score is calculated from practical, explainable inputs:
+
+- onboarding completion and required-answer coverage;
+- number of meaningful matchable answers;
+- answer type diversity;
+- active relationship goals;
+- profile freshness;
+- optional reveal participation;
+- non-spam and low-moderation-risk behavior.
+
+Members see only a gentle completeness-style summary that helps them improve their own profile. Admins can see quality levels and flags for moderation and support.
+
+### Trust scoring philosophy
+
+Trust score is an internal safety and quality signal. It considers account age, onboarding progress, message/report behavior, reveal response behavior, rapid pass/interest/block patterns, and spam indicators. Trust flags are intended for calm review and ranking decisions only; they should not be exposed to members as raw calculations.
+
+### Explainable matching and freshness
+
+Match explanations should sound tentative and human. They should describe observable compatibility signals such as overlapping expectations, similar communication pace, compatible comfort boundaries, or shared preferences. The UI avoids deterministic wording such as “perfect match.”
+
+Match cards now track freshness metadata (`last_shown_at`, `shown_count`, `hidden_until`, `freshness_score`) so stale cards can be deprioritized and repeatedly ignored cards can rotate out for a while.
+
+### Anti-spam approach
+
+The MVP detects soft signals such as repetitive onboarding text, very low matchable answer coverage, rapid action bursts, high block/report patterns, and flagged messages. These signals lower profile quality or trust and become visible to admins. They do not automatically ban, hide, or punish members.
+
+### Adaptive onboarding preparation
+
+The schema now stores onboarding fatigue and engagement metadata, including skipped optional question counts and timing fields. Full adaptive onboarding is intentionally not implemented yet; these fields prepare the product for future tuning without changing the current form flow.
+
+### Emotional UX guidelines
+
+- Use calm labels such as «آشنایی امیدوارکننده»، «احتمال گفت‌وگوی راحت»، «سازگاری اولیه خوب» and «نیازمند شناخت بیشتر».
+- Prefer “initial signal” language over certainty.
+- Keep member-facing explanations supportive and non-judgmental.
+- Keep internal trust and moderation signals inside admin-only views.
+
+### Manual intelligence QA checklist
+
+1. Create one sparse profile and one complete profile; run matching and verify profile quality scores differ.
+2. Add repeated text answers to a test profile and verify a low-quality/repetitive-text signal appears in Admin → Intelligence.
+3. Submit many rapid pass/interest actions and verify trust flags or moderation signals change after recalculation.
+4. Submit report/message-flag actions and verify trust/moderation signals are lower for affected accounts.
+5. Open `/matches` repeatedly and verify `shown_count`, `last_shown_at`, and freshness ordering update in the database.
+6. Verify low-confidence cards use gentle wording and do not claim certainty.
+7. Verify members do not see raw trust flags, trust formulas, report counts, or moderation signal JSON.
+8. Verify Admin → Intelligence shows profile quality, trust overview, suspicious indicators, onboarding fatigue, and low-quality onboarding signals.
+
+### Known limitations
+
+- Scores are heuristic and intentionally simple for shared hosting.
+- There is no scheduled background recalculation job yet; scores update during key actions and admin intelligence review.
+- Existing installations must apply the new schema columns before using Phase 8.1 pages.
+- Freshness rotation is database-driven and not a real-time recommender system.

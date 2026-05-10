@@ -7,6 +7,7 @@ use App\Repositories\FormRepository;
 use App\Repositories\GoalRepository;
 use App\Repositories\LocationRepository;
 use App\Services\OnboardingService;
+use App\Services\MatchIntelligenceService;
 
 class OnboardingController
 {
@@ -21,6 +22,7 @@ class OnboardingController
             'existingAnswers' => (new \App\Repositories\AnswerRepository())->existingForUser((int)$user['id']),
             'selectedGoalIds' => array_map('intval', array_column((new GoalRepository())->forUser((int)$user['id']), 'id')),
             'errors' => [],
+            'quality' => (new MatchIntelligenceService())->summaryForUser((int)$user['id']),
         ]);
     }
     public function save(): void
@@ -37,6 +39,7 @@ class OnboardingController
             'existingAnswers' => (new \App\Repositories\AnswerRepository())->existingForUser((int)$user['id']),
             'selectedGoalIds' => array_map('intval', $_POST['goals'] ?? []),
             'errors' => $errors,
+            'quality' => (new MatchIntelligenceService())->summaryForUser((int)$user['id']),
         ]);
     }
 }

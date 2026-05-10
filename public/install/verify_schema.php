@@ -49,6 +49,13 @@ if (!$missing) {
         'match_visibility_snapshots.viewer_user_id' => "SHOW COLUMNS FROM match_visibility_snapshots LIKE 'viewer_user_id'",
         'reports.status' => "SHOW COLUMNS FROM reports LIKE 'status'",
         'reports.priority' => "SHOW COLUMNS FROM reports LIKE 'priority'",
+        'users.profile_quality_score' => "SHOW COLUMNS FROM users LIKE 'profile_quality_score'",
+        'users.trust_score' => "SHOW COLUMNS FROM users LIKE 'trust_score'",
+        'users.quality_flags_json' => "SHOW COLUMNS FROM users LIKE 'quality_flags_json'",
+        'match_cards.last_shown_at' => "SHOW COLUMNS FROM match_cards LIKE 'last_shown_at'",
+        'match_cards.freshness_score' => "SHOW COLUMNS FROM match_cards LIKE 'freshness_score'",
+        'user_onboarding_progress.skipped_optional_count' => "SHOW COLUMNS FROM user_onboarding_progress LIKE 'skipped_optional_count'",
+        'user_onboarding_progress.engagement_metadata_json' => "SHOW COLUMNS FROM user_onboarding_progress LIKE 'engagement_metadata_json'",
     ];
     foreach ($chatColumnChecks as $label => $sql) {
         $stmt = $pdo->query($sql);

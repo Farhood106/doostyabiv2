@@ -28,11 +28,26 @@ class OnboardingService
         (new GoalRepository())->syncUserGoals($userId, $input['goals'] ?? []);
         $answers = new AnswerRepository();
         foreach ($normalized as $id => $value) { $answers->saveAnswer($userId, $questions[$id], $value); }
+        $requiredQuestions = 0;
         $answeredRequired = 0;
+        $answeredOptional = 0;
+        $optionalQuestions = 0;
         $existing = $answers->existingForUser($userId);
-        foreach ($questions as $id => $question) { if (!$question['is_required'] || isset($existing[$id]) || isset($normalized[$id])) { $answeredRequired++; } }
-        $complete = $answeredRequired === count($questions);
-        $answers->updateProgress($userId, $complete ? null : ($steps[0]['id'] ?? null), $complete ? count($steps) : 0, $complete);
+        foreach ($questions as $id => $question) {
+            $answered = isset($existing[$id]) || isset($normalized[$id]);
+            if ($question['is_required']) { $requiredQuestions++; if ($answered) { $answeredRequired++; } }
+            if (!$question['is_required']) { $optionalQuestions++; if ($answered) { $answeredOptional++; } }
+        }
+        $complete = $requiredQuestions > 0 && $answeredRequired === $requiredQuestions;
+        $skippedOptional = max(0, $optionalQuestions - $answeredOptional);
+        $fatigueScore = $optionalQuestions ? round(($skippedOptional / $optionalQuestions) * 100, 2) : 0.0;
+        $answers->updateProgress($userId, $complete ? null : ($steps[0]['id'] ?? null), $complete ? count($steps) : 0, $complete, $skippedOptional, $fatigueScore, [
+            'answered_questions' => count($existing),
+            'answered_optional' => $answeredOptional,
+            'skipped_optional' => $skippedOptional,
+            'last_submit_at' => date('c'),
+        ]);
+        (new MatchIntelligenceService())->calculateForUser($userId);
         return [true, []];
     }
 

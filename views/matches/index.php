@@ -1,13 +1,13 @@
 <section class="section-title"><div><span class="eyebrow">معرفی‌های ناشناس</span><h1>کارت‌های معرفی شما</h1><p class="muted">نام، ایمیل، اطلاعات تماس و پاسخ‌های خصوصی یا ویژه مدیران پنهان می‌ماند. با آرامش می‌توانید تمایل نشان دهید، فعلاً رد کنید، مسدود کنید یا گزارش بدهید.</p></div><a class="button secondary" href="/safety">امنیت و حریم خصوصی</a></section>
-<?php if (!$cards): ?><section class="card empty-state"><h2>هنوز معرفی‌ای ندارید</h2><p>پس از اجرای فرایند سازگاری برای شناخت‌نامه شما، کارت‌های ناشناس با زمینه سازگاری، نقاط قوت و موارد قابل‌گفت‌وگو اینجا نمایش داده می‌شوند.</p><a class="button" href="/onboarding">مرور شناخت‌نامه</a></section><?php endif; ?>
+<?php if (!$cards): ?><section class="card empty-state"><h2>هنوز معرفی‌ای ندارید</h2><p>اگر هنوز کارتی نمی‌بینید، یعنی سامانه در حال پیدا کردن معرفی‌های امن‌تر و معنادارتر است. کامل‌تر کردن چند پاسخ و هدف ارتباطی می‌تواند به پیشنهادهای آرام‌تر و دقیق‌تر کمک کند.</p><?php if ((float)($quality['profile_quality_score'] ?? 0) < 55): ?><p class="help">شناخت‌نامه شما هنوز جای کامل‌تر شدن دارد. چند پاسخ معنادار می‌تواند کیفیت معرفی‌ها را بهتر کند.</p><?php endif; ?><a class="button" href="/onboarding">مرور شناخت‌نامه</a></section><?php endif; ?>
 <div class="grid two match-grid">
 <?php foreach ($cards as $card): ?>
 <?php $status = $card['match_status']; $viewerAction = $card['viewer_action'] ?? ''; ?>
 <section class="card match-card status-<?= e($status) ?>">
     <div class="section-title"><div><span class="eyebrow">معرفی ناشناس</span><h2><?= e($card['title']) ?></h2></div><span class="pill compatibility-pill"><?= e($card['compatibility_label']) ?></span></div>
-    <div class="match-score"><span><?= (int)round((float)$card['compatibility_score']) ?>٪</span><small>برآورد سازگاری</small></div>
+    <div class="match-score"><span><?= (int)round((float)$card['compatibility_score']) ?>٪</span><small>برآورد اولیه، نه قضاوت قطعی</small></div>
     <p class="match-summary"><?= e($card['summary']) ?></p>
-    <div class="grid two insight-grid"><div class="insight positive"><h3>نقاط قوت</h3><p><?= nl2br(e($card['strengths_text'])) ?></p></div><div class="insight caution"><h3>نیازمند گفت‌وگو</h3><p><?= nl2br(e($card['cautions_text'])) ?></p></div></div>
+    <div class="grid two insight-grid"><div class="insight positive"><h3>نقاط قوت</h3><p><?= nl2br(e($card['strengths_text'])) ?></p></div><div class="insight caution"><h3>برای شناخت بیشتر</h3><p><?= nl2br(e($card['cautions_text'])) ?></p></div></div>
     <div class="status-row"><span class="pill">وضعیت معرفی: <?= e(fa_label($status)) ?></span><?php if ($viewerAction): ?><span class="pill">انتخاب شما: <?= e(fa_label($viewerAction)) ?></span><?php endif; ?></div>
     <form method="post" action="/matches/action" class="checks action-row">
         <?= csrf_field() ?><input type="hidden" name="match_id" value="<?= (int)$card['match_id'] ?>">

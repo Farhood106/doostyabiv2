@@ -19,6 +19,10 @@ function fa_label(?string $value): string
         'text' => 'متن کوتاه', 'textarea' => 'متن بلند', 'number' => 'عدد', 'date' => 'تاریخ', 'boolean' => 'بله/خیر', 'scale' => 'مقیاس', 'range' => 'بازه', 'select' => 'فهرست', 'single_choice' => 'تک‌گزینه‌ای', 'multi_choice' => 'چندگزینه‌ای', 'multi_select' => 'انتخاب چندتایی', 'city_single' => 'یک شهر', 'city_multi' => 'چند شهر',
         'harassment' => 'آزار یا فشار', 'spam' => 'هرزنامه یا کلاهبرداری', 'spam or scam' => 'هرزنامه یا کلاهبرداری', 'fake_profile' => 'اطلاعات غیرواقعی', 'unsafe_behavior' => 'رفتار ناامن', 'privacy' => 'نگرانی حریم خصوصی', 'inappropriate_content' => 'محتوای نامناسب', 'other' => 'مورد دیگر',
         'match' => 'معرفی', 'user' => 'عضو', 'safety' => 'امنیت', 'chat' => 'گفت‌وگو', 'message' => 'پیام', 'display_name' => 'نام نمایشی', 'city' => 'شهر', 'selected_goals_summary' => 'خلاصه هدف‌ها',
+        'strong' => 'شناخت‌نامه کامل و قابل اعتماد', 'growing' => 'شناخت‌نامه رو به تکمیل', 'limited' => 'نیازمند چند پاسخ بیشتر', 'not_ready' => 'آماده معرفی دقیق نیست',
+        'steady' => 'رفتار قابل اتکا', 'watch' => 'نیازمند پایش آرام', 'new' => 'حساب تازه',
+        'incomplete_onboarding' => 'شناخت‌نامه ناقص', 'few_matchable_answers' => 'پاسخ سازگاری کم', 'no_active_goals' => 'بدون هدف فعال', 'stale_profile' => 'نیازمند به‌روزرسانی', 'repetitive_text_answers' => 'پاسخ متنی تکراری', 'moderation_history' => 'سابقه رسیدگی',
+        'new_account' => 'حساب تازه', 'flagged_messages' => 'پیام پرچم‌دار', 'multiple_reports_received' => 'چند گزارش دریافتی', 'rapid_or_repetitive_actions' => 'رفتار سریع یا تکراری', 'high_block_count' => 'مسدودسازی زیاد',
     ];
     return $labels[$value] ?? $labels[strtolower($value)] ?? $value;
 }

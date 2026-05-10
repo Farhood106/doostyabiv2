@@ -12,6 +12,7 @@ $hasErrors = !empty($errors);
     <div class="progress"><span style="width: <?= $percent ?>%"></span></div>
     <div class="section-title"><p class="help"><?= (int)$answeredQuestions ?> از <?= (int)$totalQuestions ?> پرسش پاسخ داده شده است.</p><a href="/safety">مرور تنظیمات امنیت</a></div>
 </section>
+<?php if (!empty($quality)): ?><section class="card quality-card"><div class="section-title"><div><span class="eyebrow">آمادگی شناخت‌نامه</span><h2><?= e(fa_label($quality['profile_quality_level'] ?? 'not_ready')) ?></h2><p class="muted">این امتیاز فقط برای کمک به کامل‌تر شدن شناخت‌نامه شماست و جزئیات داخلی آن به دیگر اعضا نمایش داده نمی‌شود.</p></div><span class="pill"><?= (int)round((float)($quality['profile_quality_score'] ?? 0)) ?>٪</span></div><div class="progress"><span style="width: <?= max(0, min(100, (int)round((float)($quality['profile_quality_score'] ?? 0)))) ?>%"></span></div><p class="help">برای معرفی‌های آرام‌تر و دقیق‌تر، چند پاسخ معنادار، هدف فعال و به‌روزرسانی دوره‌ای شناخت‌نامه کمک‌کننده است.</p></section><?php endif; ?>
 <?php if (!$steps): ?><section class="card empty-state"><h2>فرم شناخت در حال آماده‌سازی است</h2><p>هنوز مرحله فعالی برای شناخت وجود ندارد. پس از انتشار فرم توسط مدیر دوباره سر بزنید.</p></section><?php endif; ?>
 <?php if ($hasErrors): ?><section class="alert error"><strong>چند پاسخ نیاز به توجه دارد.</strong><p>لطفاً پرسش‌های مشخص‌شده را بررسی کنید. پاسخ‌های ضروری با ستاره مشخص شده‌اند.</p></section><?php endif; ?>
 <form method="post" action="/onboarding" class="onboarding-form">

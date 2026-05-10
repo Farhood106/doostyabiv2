@@ -4,13 +4,14 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\View;
 use App\Repositories\MatchRepository;
+use App\Services\MatchIntelligenceService;
 
 class MatchController
 {
     public function index(): void
     {
         $user = Auth::requireLogin();
-        View::render('matches/index', ['cards' => (new MatchRepository())->cardsForUser((int)$user['id'])]);
+        View::render('matches/index', ['cards' => (new MatchRepository())->cardsForUser((int)$user['id']), 'quality' => (new MatchIntelligenceService())->summaryForUser((int)$user['id'])]);
     }
     public function action(): void
     {

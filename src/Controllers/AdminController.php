@@ -17,6 +17,8 @@ use App\Repositories\MatchRepository;
 use App\Repositories\RevealRepository;
 use App\Repositories\ReportRepository;
 use App\Repositories\ChatRepository;
+use App\Repositories\IntelligenceRepository;
+use App\Services\MatchIntelligenceService;
 use App\Services\FormBuilderService;
 use App\Services\MatchService;
 use App\Services\SystemHealthService;
@@ -128,8 +130,9 @@ class AdminController
         Auth::requirePermission('users.view');
         $id = (int)($_GET['id'] ?? 0);
         $user = (new UserRepository())->find($id);
-        if (!$user) { http_response_code(404); exit('User not found'); }
-        View::render('admin/user_detail', ['profile' => $user, 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
+        if (!$user) { http_response_code(404); exit('عضو پیدا نشد'); }
+        (new MatchIntelligenceService())->calculateForUser($id);
+        View::render('admin/user_detail', ['profile' => (new UserRepository())->find($id), 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
     }
 
 
@@ -236,6 +239,14 @@ class AdminController
         \redirect('/admin/reveals');
     }
 
+
+    public function intelligence(): void
+    {
+        Auth::requireAdmin();
+        $service = new MatchIntelligenceService();
+        foreach ((new UserRepository())->allMembers() as $member) { $service->calculateForUser((int)$member['id']); }
+        View::render('admin/intelligence', ['members' => (new IntelligenceRepository())->overview(), 'lowConfidenceMatches' => (new MatchRepository())->lowConfidenceMatches()]);
+    }
 
     public function moderation(): void
     {

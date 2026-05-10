@@ -49,6 +49,7 @@ $router->post('/admin/catalogs/provinces/delete', [AdminController::class, 'dele
 $router->post('/admin/catalogs/cities', [AdminController::class, 'saveCity']);
 $router->post('/admin/catalogs/cities/delete', [AdminController::class, 'deleteCity']);
 $router->get('/admin/health', [AdminController::class, 'health']);
+$router->get('/admin/intelligence', [AdminController::class, 'intelligence']);
 $router->get('/admin/matches', [AdminController::class, 'matches']);
 $router->post('/admin/matches/run', [AdminController::class, 'runMatching']);
 $router->post('/admin/matches/reset', [AdminController::class, 'resetMatch']);
