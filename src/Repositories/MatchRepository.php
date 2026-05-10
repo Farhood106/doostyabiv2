@@ -95,6 +95,7 @@ class MatchRepository
 
     public function cardsForUser(int $userId): array
     {
+        $this->rotateIgnoredCards($userId);
         $stmt = $this->db->prepare("SELECT mc.*, m.compatibility_score, m.confidence_score, m.match_status, ma.action AS viewer_action
             FROM match_cards mc JOIN matches m ON m.id=mc.match_id
             LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
@@ -102,7 +103,7 @@ class MatchRepository
             AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=mc.viewer_user_id AND b.blocked_user_id=mc.target_user_id) OR (b.blocker_user_id=mc.target_user_id AND b.blocked_user_id=mc.viewer_user_id)))
             AND COALESCE(ma.action,'') NOT IN ('pass','block')
             AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
-            ORDER BY mc.freshness_score DESC, mc.shown_count ASC, COALESCE(mc.last_shown_at, '1970-01-01') ASC, m.compatibility_score DESC
+            ORDER BY CASE WHEN mc.last_shown_at IS NULL THEN 0 ELSE 1 END ASC, mc.freshness_score DESC, mc.shown_count ASC, COALESCE(mc.last_shown_at, '1970-01-01') ASC, m.compatibility_score DESC
             LIMIT 20");
         $stmt->execute([$userId]);
         $cards = $stmt->fetchAll();
@@ -112,6 +113,19 @@ class MatchRepository
             $this->db->prepare("UPDATE match_cards SET last_shown_at=NOW(), shown_count=shown_count+1, freshness_score=GREATEST(5, freshness_score - LEAST(12, shown_count + 1)) WHERE id IN ($in)")->execute($ids);
         }
         return $cards;
+    }
+
+    private function rotateIgnoredCards(int $userId): void
+    {
+        $stmt = $this->db->prepare("UPDATE match_cards mc
+            JOIN matches m ON m.id=mc.match_id
+            LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
+            SET mc.hidden_until=DATE_ADD(NOW(), INTERVAL 7 DAY), mc.freshness_score=GREATEST(5, mc.freshness_score-15)
+            WHERE mc.viewer_user_id=? AND m.match_status='suggested' AND mc.shown_count >= 5
+            AND mc.last_shown_at < DATE_SUB(NOW(), INTERVAL 2 DAY)
+            AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
+            AND ma.id IS NULL");
+        $stmt->execute([$userId]);
     }
 
     public function recordAction(int $matchId, int $actorId, string $action): void
@@ -192,7 +206,7 @@ class MatchRepository
 
     public function lowConfidenceMatches(): array
     {
-        return $this->db->query('SELECT m.*, u1.first_name AS user_one_name, u2.first_name AS user_two_name FROM matches m JOIN users u1 ON u1.id=m.user_one_id JOIN users u2 ON u2.id=m.user_two_id WHERE m.confidence_score < 50 ORDER BY m.confidence_score ASC, m.updated_at DESC LIMIT 50')->fetchAll();
+        return $this->db->query('SELECT m.*, u1.first_name AS user_one_name, u2.first_name AS user_two_name, COALESCE(card_stats.avg_freshness_score, 0) AS avg_freshness_score, COALESCE(card_stats.total_shown_count, 0) AS total_shown_count FROM matches m JOIN users u1 ON u1.id=m.user_one_id JOIN users u2 ON u2.id=m.user_two_id LEFT JOIN (SELECT match_id, AVG(freshness_score) AS avg_freshness_score, SUM(shown_count) AS total_shown_count FROM match_cards GROUP BY match_id) card_stats ON card_stats.match_id=m.id WHERE m.confidence_score < 50 ORDER BY m.confidence_score ASC, m.updated_at DESC LIMIT 50')->fetchAll();
     }
     public function scoresForMatch(int $matchId): array { $stmt=$this->db->prepare('SELECT * FROM match_scores WHERE match_id=? ORDER BY score_type'); $stmt->execute([$matchId]); return $stmt->fetchAll(); }
     public function explanationForMatch(int $matchId): ?array { $stmt=$this->db->prepare('SELECT * FROM match_explanations WHERE match_id=?'); $stmt->execute([$matchId]); return $stmt->fetch() ?: null; }

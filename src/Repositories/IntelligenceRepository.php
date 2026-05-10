@@ -12,18 +12,20 @@ class IntelligenceRepository
     public function userInputs(int $userId): array
     {
         $stmt = $this->db->prepare("SELECT u.id, u.created_at, u.updated_at, u.profile_quality_score, u.profile_quality_level, u.trust_score, u.trust_level,
-                p.is_complete, p.completed_steps, p.skipped_optional_count, p.fatigue_score, p.updated_at AS onboarding_updated_at
+                p.is_complete, p.completed_steps, p.skipped_optional_count, p.fatigue_score, p.started_at, p.completed_at, p.engagement_metadata_json, p.updated_at AS onboarding_updated_at
             FROM users u
             LEFT JOIN user_onboarding_progress p ON p.user_id=u.id
             WHERE u.id=? LIMIT 1");
         $stmt->execute([$userId]);
         $user = $stmt->fetch() ?: [];
 
-        $questionStats = $this->db->query("SELECT COUNT(*) AS total_questions, SUM(is_required=1) AS required_questions, SUM(is_matchable=1) AS matchable_questions FROM questions WHERE is_active=1 AND deleted_at IS NULL")->fetch() ?: [];
+        $questionStats = $this->db->query("SELECT COUNT(*) AS total_questions, SUM(is_required=1) AS required_questions, SUM(is_required=0) AS optional_questions, SUM(is_matchable=1) AS matchable_questions FROM questions WHERE is_active=1 AND deleted_at IS NULL")->fetch() ?: [];
         $answerStmt = $this->db->prepare("SELECT COUNT(DISTINCT ua.question_id) AS answered_questions,
                 SUM(q.is_required=1) AS answered_required,
                 SUM(q.is_matchable=1) AS answered_matchable,
+                SUM(q.is_required=0) AS answered_optional,
                 COUNT(DISTINCT q.answer_type) AS answer_type_count,
+                COUNT(DISTINCT NULLIF(LOWER(TRIM(ua.answer_text)), '')) AS distinct_text_answer_count,
                 MAX(ua.updated_at) AS last_answered_at,
                 GROUP_CONCAT(CASE WHEN q.answer_type IN ('text','textarea','range') THEN LOWER(TRIM(ua.answer_text)) ELSE NULL END SEPARATOR '||') AS text_answers
             FROM user_answers ua
@@ -50,8 +52,13 @@ class IntelligenceRepository
         $revealApproved = $this->count("SELECT COUNT(*) FROM reveal_requests WHERE target_user_id=? AND status='approved'", $userId);
         $revealRejected = $this->count("SELECT COUNT(*) FROM reveal_requests WHERE target_user_id=? AND status='rejected'", $userId);
         $blocksMade = $this->count('SELECT COUNT(*) FROM blocks WHERE blocker_user_id=? AND deleted_at IS NULL', $userId);
+        $blocksReceived = $this->count('SELECT COUNT(*) FROM blocks WHERE blocked_user_id=? AND deleted_at IS NULL', $userId);
 
-        return compact('user', 'questionStats', 'answers', 'goals', 'actions', 'reportMade', 'reportReceived', 'messageCount', 'flagCount', 'revealRequested', 'revealIncoming', 'revealApproved', 'revealRejected', 'blocksMade');
+        $messageStmt = $this->db->prepare("SELECT COUNT(*) AS total_messages, COUNT(DISTINCT LEFT(LOWER(TRIM(body)), 120)) AS distinct_message_starts, AVG(CHAR_LENGTH(TRIM(body))) AS avg_message_length FROM messages WHERE sender_user_id=? AND deleted_at IS NULL");
+        $messageStmt->execute([$userId]);
+        $messageStats = $messageStmt->fetch() ?: [];
+
+        return compact('user', 'questionStats', 'answers', 'goals', 'actions', 'reportMade', 'reportReceived', 'messageCount', 'messageStats', 'flagCount', 'revealRequested', 'revealIncoming', 'revealApproved', 'revealRejected', 'blocksMade', 'blocksReceived');
     }
 
     private function count(string $sql, int $userId): int

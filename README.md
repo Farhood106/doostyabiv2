@@ -511,3 +511,11 @@ The schema now stores onboarding fatigue and engagement metadata, including skip
 - There is no scheduled background recalculation job yet; scores update during key actions and admin intelligence review.
 - Existing installations must apply the new schema columns before using Phase 8.1 pages.
 - Freshness rotation is database-driven and not a real-time recommender system.
+
+### Phase 8.1 hardening notes
+
+- Match score persistence includes the `freshness_readiness` score type so generated score breakdowns align with the database enum and do not fail during matching.
+- Profile quality flags now distinguish repetitive text, very low-content completion, and high optional-question fatigue to make low-quality onboarding easier for admins to spot without public exposure.
+- Trust signals now include blocks received and repetitive/very short message patterns alongside rapid pass/interest behavior, reports, and flagged messages. These remain review signals only and never trigger automatic bans.
+- Card rotation hides repeatedly ignored stale cards for a short cooldown and records freshness/show counts in the Admin Intelligence low-confidence table, helping admins verify stale cards are rotating.
+- Onboarding engagement metadata preserves submit count and timing-derived fields (`seconds_since_start`, `seconds_since_last_update`, `average_seconds_per_answer`) as infrastructure for future adaptive onboarding.

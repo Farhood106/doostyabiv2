@@ -21,8 +21,8 @@ function fa_label(?string $value): string
         'match' => 'معرفی', 'user' => 'عضو', 'safety' => 'امنیت', 'chat' => 'گفت‌وگو', 'message' => 'پیام', 'display_name' => 'نام نمایشی', 'city' => 'شهر', 'selected_goals_summary' => 'خلاصه هدف‌ها',
         'strong' => 'شناخت‌نامه کامل و قابل اعتماد', 'growing' => 'شناخت‌نامه رو به تکمیل', 'limited' => 'نیازمند چند پاسخ بیشتر', 'not_ready' => 'آماده معرفی دقیق نیست',
         'steady' => 'رفتار قابل اتکا', 'watch' => 'نیازمند پایش آرام', 'new' => 'حساب تازه',
-        'incomplete_onboarding' => 'شناخت‌نامه ناقص', 'few_matchable_answers' => 'پاسخ سازگاری کم', 'no_active_goals' => 'بدون هدف فعال', 'stale_profile' => 'نیازمند به‌روزرسانی', 'repetitive_text_answers' => 'پاسخ متنی تکراری', 'moderation_history' => 'سابقه رسیدگی',
-        'new_account' => 'حساب تازه', 'flagged_messages' => 'پیام پرچم‌دار', 'multiple_reports_received' => 'چند گزارش دریافتی', 'rapid_or_repetitive_actions' => 'رفتار سریع یا تکراری', 'high_block_count' => 'مسدودسازی زیاد',
+        'incomplete_onboarding' => 'شناخت‌نامه ناقص', 'few_matchable_answers' => 'پاسخ سازگاری کم', 'no_active_goals' => 'بدون هدف فعال', 'stale_profile' => 'نیازمند به‌روزرسانی', 'repetitive_text_answers' => 'پاسخ متنی تکراری', 'empty_onboarding_pattern' => 'تکمیل بسیار کم‌محتوا', 'high_onboarding_fatigue' => 'خستگی احتمالی در شناخت‌نامه', 'moderation_history' => 'سابقه رسیدگی',
+        'new_account' => 'حساب تازه', 'flagged_messages' => 'پیام پرچم‌دار', 'multiple_reports_received' => 'چند گزارش دریافتی', 'rapid_or_repetitive_actions' => 'رفتار سریع یا تکراری', 'high_block_count' => 'مسدودسازی زیاد', 'blocks_received' => 'مسدود شدن توسط چند عضو', 'repetitive_messages' => 'پیام‌های تکراری',
     ];
     return $labels[$value] ?? $labels[strtolower($value)] ?? $value;
 }

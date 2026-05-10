@@ -418,7 +418,7 @@ CREATE TABLE IF NOT EXISTS match_visibility_snapshots (
 CREATE TABLE IF NOT EXISTS match_scores (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     match_id BIGINT NOT NULL,
-    score_type ENUM('goal_fit','location_fit','answer_fit','boundary_fit','confidence','penalty') NOT NULL,
+    score_type ENUM('goal_fit','location_fit','answer_fit','boundary_fit','freshness_readiness','confidence','penalty') NOT NULL,
     score_value DECIMAL(6,2) NOT NULL DEFAULT 0.00,
     weight DECIMAL(6,2) NOT NULL DEFAULT 1.00,
     details TEXT NULL,
