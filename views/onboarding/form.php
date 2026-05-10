@@ -66,7 +66,7 @@ function render_cities(array $cities, string $name, ?array $existing, bool $mult
 {
     $selected = array_map('intval', $existing['cities'] ?? []);
     $attr = $multi ? ' multiple size="6"' : '';
-    $html = '<select name="'.$name.'"'.$attr.$req.'>'.(!$multi ? '<option value="">انتخاب کنید city</option>' : '');
+    $html = '<select name="'.$name.'"'.$attr.$req.'>'.(!$multi ? '<option value="">انتخاب شهر</option>' : '');
     foreach ($cities as $city) { $sel = in_array((int)$city['id'], $selected, true) ? ' selected' : ''; $html .= '<option value="'.(int)$city['id'].'"'.$sel.'>'.e($city['province_name'].' — '.$city['name']).'</option>'; }
     return $html.'</select>';
 }
