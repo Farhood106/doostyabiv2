@@ -99,7 +99,10 @@ INSERT INTO admin_settings (setting_key, setting_value, updated_by) VALUES
 ('site_name', 'دوستیابی', 1),
 ('site_status', 'active', 1),
 ('registration_enabled', '1', 1),
-('default_onboarding_redirect', '/onboarding', 1)
+('default_onboarding_redirect', '/onboarding', 1),
+('minimum_required_answers_before_matching', '3', 1),
+('max_optional_questions_per_step', '3', 1),
+('show_low_confidence_matches', '1', 1)
 ON DUPLICATE KEY UPDATE setting_value=setting_value;
 
 

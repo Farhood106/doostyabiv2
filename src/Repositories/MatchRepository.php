@@ -31,6 +31,50 @@ class MatchRepository
         return $stmt->fetchAll();
     }
 
+
+    public function answerReadiness(int $userId): array
+    {
+        $stmt = $this->db->prepare("SELECT
+                SUM(q.is_required=1) AS required_total,
+                SUM(q.is_required=1 AND ua.id IS NOT NULL) AS required_answered,
+                SUM(q.is_matchable=1) AS matchable_total,
+                SUM(q.is_matchable=1 AND ua.id IS NOT NULL) AS matchable_answered
+            FROM questions q
+            LEFT JOIN user_answers ua ON ua.question_id=q.id AND ua.user_id=?
+            WHERE q.is_active=1 AND q.deleted_at IS NULL");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'required_total' => (int)($row['required_total'] ?? 0),
+            'required_answered' => (int)($row['required_answered'] ?? 0),
+            'matchable_total' => (int)($row['matchable_total'] ?? 0),
+            'matchable_answered' => (int)($row['matchable_answered'] ?? 0),
+        ];
+    }
+
+    public function cardAvailabilityForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare("SELECT
+                SUM(CASE WHEN m.match_status IN ('suggested','mutual') AND COALESCE(ma.action,'') NOT IN ('pass','block') AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW()) THEN 1 ELSE 0 END) AS visible_cards,
+                SUM(CASE WHEN m.match_status IN ('suggested','mutual') AND mc.hidden_until >= NOW() THEN 1 ELSE 0 END) AS hidden_cards,
+                SUM(CASE WHEN COALESCE(ma.action,'')='pass' OR m.match_status='passed' THEN 1 ELSE 0 END) AS passed_cards,
+                SUM(CASE WHEN m.match_status='mutual' THEN 1 ELSE 0 END) AS mutual_cards,
+                COUNT(*) AS total_cards
+            FROM match_cards mc
+            JOIN matches m ON m.id=mc.match_id
+            LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
+            WHERE mc.viewer_user_id=?");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'visible_cards' => (int)($row['visible_cards'] ?? 0),
+            'hidden_cards' => (int)($row['hidden_cards'] ?? 0),
+            'passed_cards' => (int)($row['passed_cards'] ?? 0),
+            'mutual_cards' => (int)($row['mutual_cards'] ?? 0),
+            'total_cards' => (int)($row['total_cards'] ?? 0),
+        ];
+    }
+
     public function goalsForUser(int $userId): array
     {
         $stmt = $this->db->prepare('SELECT g.id, g.title FROM goals g JOIN user_goals ug ON ug.goal_id=g.id WHERE ug.user_id=? AND g.is_active=1 AND g.deleted_at IS NULL');
@@ -93,9 +137,10 @@ class MatchRepository
         $stmt->execute([$matchId, $viewerId, $targetId, $card['title'], $card['summary'], $card['strengths'], $card['cautions'], $card['label'], 'anonymous', $card['freshness_score'] ?? 50, json_encode($card['payload'], JSON_UNESCAPED_UNICODE)]);
     }
 
-    public function cardsForUser(int $userId): array
+    public function cardsForUser(int $userId, bool $showLowConfidence = true): array
     {
         $this->rotateIgnoredCards($userId);
+        $confidenceSql = $showLowConfidence ? '' : ' AND m.confidence_score >= 45';
         $stmt = $this->db->prepare("SELECT mc.*, m.compatibility_score, m.confidence_score, m.match_status, ma.action AS viewer_action
             FROM match_cards mc JOIN matches m ON m.id=mc.match_id
             LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
@@ -103,6 +148,7 @@ class MatchRepository
             AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=mc.viewer_user_id AND b.blocked_user_id=mc.target_user_id) OR (b.blocker_user_id=mc.target_user_id AND b.blocked_user_id=mc.viewer_user_id)))
             AND COALESCE(ma.action,'') NOT IN ('pass','block')
             AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
+            $confidenceSql
             ORDER BY CASE WHEN mc.last_shown_at IS NULL THEN 0 ELSE 1 END ASC, mc.freshness_score DESC, mc.shown_count ASC, COALESCE(mc.last_shown_at, '1970-01-01') ASC, m.compatibility_score DESC
             LIMIT 20");
         $stmt->execute([$userId]);

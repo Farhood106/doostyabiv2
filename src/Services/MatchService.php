@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Repositories\AdminSettingsRepository;
 use App\Repositories\MatchRepository;
 
 class MatchService
@@ -12,6 +13,9 @@ class MatchService
         $cards = new MatchCardService();
         $intel = new MatchIntelligenceService();
         $created = 0;
+        $settings = (new AdminSettingsRepository())->all();
+        $readiness = $repo->answerReadiness($userId);
+        if ((int)$readiness['required_answered'] < (int)($settings['minimum_required_answers_before_matching'] ?? 3)) { return 0; }
         $viewerQuality = $intel->calculateForUser($userId);
         $viewerGoals = $repo->goalsForUser($userId);
         $viewerCities = $repo->cityIdsForUser($userId);

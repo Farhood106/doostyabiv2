@@ -6,3 +6,4 @@ select option,.form-control select option,.question-card select option,.admin-fo
 select optgroup{color:#111827!important;background-color:#fff!important;direction:rtl;text-align:right}
 select:disabled,.form-control select:disabled,.question-card select:disabled,.admin-form select:disabled{color:#6b7280!important;background-color:#f3f4f6!important;opacity:1}
 select:disabled option{color:#6b7280!important;background-color:#f3f4f6!important}
+.question-card.optional-question{border-style:dashed}.question-card.required-question{border-right:4px solid var(--brand)}.match-card.tone-strong_initial_fit:before{background:linear-gradient(270deg,#156f67,#2d9c72)}.match-card.tone-hopeful:before{background:linear-gradient(270deg,#156f67,#d99a3d)}.match-card.tone-cautious:before,.match-card.tone-exploratory:before{background:linear-gradient(270deg,#d99a3d,#f2d49b)}
