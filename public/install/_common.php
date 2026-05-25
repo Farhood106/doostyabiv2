@@ -7,7 +7,7 @@ function install_expected_tables(): array
         'roles', 'permissions', 'role_permissions', 'users', 'goals', 'user_goals',
         'provinces', 'cities', 'form_steps', 'question_groups', 'questions',
         'question_options', 'user_answers', 'user_answer_options', 'user_answer_cities',
-        'user_onboarding_progress', 'audit_logs', 'admin_settings', 'blocks', 'match_recommendation_queue', 'matches', 'chats', 'chat_participants', 'messages', 'message_flags', 'reports', 'reveal_types', 'reveal_requests', 'match_visibility_snapshots', 'match_scores', 'match_cards', 'match_actions', 'match_explanations',
+        'user_onboarding_progress', 'audit_logs', 'admin_settings', 'blocks', 'match_recommendation_queue', 'matches', 'chats', 'chat_participants', 'messages', 'message_flags', 'reports', 'reveal_types', 'reveal_requests', 'match_visibility_snapshots', 'match_scores', 'match_cards', 'match_actions', 'match_explanations', 'privacy_shields', 'support_departments', 'support_conversations', 'support_participants', 'support_messages', 'support_assignments', 'support_quick_replies', 'support_ratings',
     ];
 }
 
@@ -73,17 +73,19 @@ function install_pdo(?array $config): array
         return [null, 'The PDO MySQL extension is not available.'];
     }
     $db = $config['db'];
-    foreach (['host', 'name', 'user', 'charset'] as $key) {
+    foreach (['host', 'name', 'user'] as $key) {
         if (empty($db[$key])) {
             return [null, 'Database configuration is incomplete.'];
         }
     }
     try {
-        $dsn = "mysql:host={$db['host']};dbname={$db['name']};charset={$db['charset']}";
+        $charset = 'utf8mb4';
+        $dsn = "mysql:host={$db['host']};dbname={$db['name']};charset={$charset}";
         $pdo = new PDO($dsn, $db['user'], $db['pass'] ?? '', [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
         ]);
         return [$pdo, null];
     } catch (Throwable $e) {

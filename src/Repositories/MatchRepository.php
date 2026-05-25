@@ -14,21 +14,67 @@ class MatchRepository
         return $this->db->query("SELECT u.* FROM users u JOIN roles r ON r.id=u.role_id WHERE r.name='user' AND u.is_active=1 ORDER BY u.id")->fetchAll();
     }
 
-    public function candidateUsers(int $userId, bool $recalculate = false): array
+    public function candidateUsers(int $userId, bool $recalculate = false, bool $allowBroad = false): array
     {
         $existingSql = $recalculate ? '' : 'AND NOT EXISTS (SELECT 1 FROM matches m WHERE (m.user_one_id=LEAST(?, u.id) AND m.user_two_id=GREATEST(?, u.id)))';
+        $goalJoin = $allowBroad ? '' : 'JOIN user_goals g1 ON g1.user_id=? JOIN user_goals g2 ON g2.user_id=u.id AND g2.goal_id=g1.goal_id';
         $sql = "SELECT DISTINCT u.* FROM users u
             JOIN roles r ON r.id=u.role_id AND r.name='user'
-            JOIN user_goals g1 ON g1.user_id=?
-            JOIN user_goals g2 ON g2.user_id=u.id AND g2.goal_id=g1.goal_id
+            $goalJoin
             WHERE u.is_active=1 AND u.id<>?
-            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=? AND b.blocked_user_id=u.id) OR (b.blocker_user_id=u.id AND b.blocked_user_id=?))) $existingSql
-            ORDER BY u.id";
-        $params = [$userId, $userId, $userId, $userId];
+            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=? AND b.blocked_user_id=u.id) OR (b.blocker_user_id=u.id AND b.blocked_user_id=?)))
+            AND NOT EXISTS (SELECT 1 FROM privacy_shields ps WHERE ps.user_id=? AND ps.deleted_at IS NULL AND ps.hashed_value=SHA2(LOWER(TRIM(u.email)),256))
+            AND NOT EXISTS (SELECT 1 FROM privacy_shields ps2 WHERE ps2.user_id=u.id AND ps2.deleted_at IS NULL AND ps2.hashed_value=SHA2(LOWER(TRIM((SELECT email FROM users WHERE id=? LIMIT 1))),256)) $existingSql
+            ORDER BY u.profile_quality_score DESC, u.trust_score DESC, u.updated_at DESC, u.id";
+        $params = $allowBroad ? [$userId, $userId, $userId, $userId, $userId] : [$userId, $userId, $userId, $userId, $userId, $userId];
         if (!$recalculate) { $params[] = $userId; $params[] = $userId; }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+
+    public function answerReadiness(int $userId): array
+    {
+        $stmt = $this->db->prepare("SELECT
+                SUM(q.is_required=1) AS required_total,
+                SUM(q.is_required=1 AND ua.id IS NOT NULL) AS required_answered,
+                SUM(q.is_matchable=1) AS matchable_total,
+                SUM(q.is_matchable=1 AND ua.id IS NOT NULL) AS matchable_answered
+            FROM questions q
+            LEFT JOIN user_answers ua ON ua.question_id=q.id AND ua.user_id=?
+            WHERE q.is_active=1 AND q.deleted_at IS NULL");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'required_total' => (int)($row['required_total'] ?? 0),
+            'required_answered' => (int)($row['required_answered'] ?? 0),
+            'matchable_total' => (int)($row['matchable_total'] ?? 0),
+            'matchable_answered' => (int)($row['matchable_answered'] ?? 0),
+        ];
+    }
+
+    public function cardAvailabilityForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare("SELECT
+                SUM(CASE WHEN m.match_status IN ('suggested','mutual') AND COALESCE(ma.action,'') NOT IN ('pass','block') AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW()) THEN 1 ELSE 0 END) AS visible_cards,
+                SUM(CASE WHEN m.match_status IN ('suggested','mutual') AND mc.hidden_until >= NOW() THEN 1 ELSE 0 END) AS hidden_cards,
+                SUM(CASE WHEN COALESCE(ma.action,'')='pass' OR m.match_status='passed' THEN 1 ELSE 0 END) AS passed_cards,
+                SUM(CASE WHEN m.match_status='mutual' THEN 1 ELSE 0 END) AS mutual_cards,
+                COUNT(*) AS total_cards
+            FROM match_cards mc
+            JOIN matches m ON m.id=mc.match_id
+            LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
+            WHERE mc.viewer_user_id=?");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'visible_cards' => (int)($row['visible_cards'] ?? 0),
+            'hidden_cards' => (int)($row['hidden_cards'] ?? 0),
+            'passed_cards' => (int)($row['passed_cards'] ?? 0),
+            'mutual_cards' => (int)($row['mutual_cards'] ?? 0),
+            'total_cards' => (int)($row['total_cards'] ?? 0),
+        ];
     }
 
     public function goalsForUser(int $userId): array
@@ -89,21 +135,45 @@ class MatchRepository
 
     public function saveCard(int $matchId, int $viewerId, int $targetId, array $card): void
     {
-        $stmt = $this->db->prepare('INSERT INTO match_cards (match_id, viewer_user_id, target_user_id, title, summary, strengths_text, cautions_text, compatibility_label, privacy_level, generated_payload_json) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), summary=VALUES(summary), strengths_text=VALUES(strengths_text), cautions_text=VALUES(cautions_text), compatibility_label=VALUES(compatibility_label), generated_payload_json=VALUES(generated_payload_json)');
-        $stmt->execute([$matchId, $viewerId, $targetId, $card['title'], $card['summary'], $card['strengths'], $card['cautions'], $card['label'], 'anonymous', json_encode($card['payload'])]);
+        $stmt = $this->db->prepare('INSERT INTO match_cards (match_id, viewer_user_id, target_user_id, title, summary, narrative, strengths_text, cautions_text, compatibility_label, privacy_level, freshness_score, generated_payload_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), summary=VALUES(summary), narrative=VALUES(narrative), strengths_text=VALUES(strengths_text), cautions_text=VALUES(cautions_text), compatibility_label=VALUES(compatibility_label), freshness_score=VALUES(freshness_score), generated_payload_json=VALUES(generated_payload_json)');
+        $stmt->execute([$matchId, $viewerId, $targetId, $card['title'], $card['summary'], $card['narrative'] ?? $card['summary'], $card['strengths'], $card['cautions'], $card['label'], 'anonymous', $card['freshness_score'] ?? 50, json_encode($card['payload'], JSON_UNESCAPED_UNICODE)]);
     }
 
-    public function cardsForUser(int $userId): array
+    public function cardsForUser(int $userId, bool $showLowConfidence = true): array
     {
+        $this->rotateIgnoredCards($userId);
+        $confidenceSql = $showLowConfidence ? '' : ' AND m.confidence_score >= 45';
         $stmt = $this->db->prepare("SELECT mc.*, m.compatibility_score, m.confidence_score, m.match_status, ma.action AS viewer_action
             FROM match_cards mc JOIN matches m ON m.id=mc.match_id
             LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
             WHERE mc.viewer_user_id=? AND mc.privacy_level='anonymous' AND m.match_status IN ('suggested','mutual')
             AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=mc.viewer_user_id AND b.blocked_user_id=mc.target_user_id) OR (b.blocker_user_id=mc.target_user_id AND b.blocked_user_id=mc.viewer_user_id)))
             AND COALESCE(ma.action,'') NOT IN ('pass','block')
-            ORDER BY m.compatibility_score DESC, mc.updated_at DESC");
+            AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
+            $confidenceSql
+            ORDER BY CASE WHEN mc.last_shown_at IS NULL THEN 0 ELSE 1 END ASC, mc.freshness_score DESC, mc.shown_count ASC, COALESCE(mc.last_shown_at, '1970-01-01') ASC, m.compatibility_score DESC
+            LIMIT 20");
         $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $cards = $stmt->fetchAll();
+        if ($cards) {
+            $ids = array_map('intval', array_column($cards, 'id'));
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $this->db->prepare("UPDATE match_cards SET last_shown_at=NOW(), shown_count=shown_count+1, freshness_score=GREATEST(5, freshness_score - LEAST(12, shown_count + 1)) WHERE id IN ($in)")->execute($ids);
+        }
+        return $cards;
+    }
+
+    private function rotateIgnoredCards(int $userId): void
+    {
+        $stmt = $this->db->prepare("UPDATE match_cards mc
+            JOIN matches m ON m.id=mc.match_id
+            LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
+            SET mc.hidden_until=DATE_ADD(NOW(), INTERVAL 7 DAY), mc.freshness_score=GREATEST(5, mc.freshness_score-15)
+            WHERE mc.viewer_user_id=? AND m.match_status='suggested' AND mc.shown_count >= 5
+            AND mc.last_shown_at < DATE_SUB(NOW(), INTERVAL 2 DAY)
+            AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
+            AND ma.id IS NULL");
+        $stmt->execute([$userId]);
     }
 
     public function recordAction(int $matchId, int $actorId, string $action): void
@@ -112,13 +182,15 @@ class MatchRepository
         if (!$targetId || !in_array($action, ['interested','pass','block'], true)) { return; }
         $stmt = $this->db->prepare('INSERT INTO match_actions (match_id, actor_user_id, target_user_id, action) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE action=VALUES(action), created_at=CURRENT_TIMESTAMP');
         $stmt->execute([$matchId, $actorId, $targetId, $action]);
+        $this->refreshIntelligenceQuietly($actorId);
+        $this->refreshIntelligenceQuietly($targetId);
         if ($action === 'block') {
             $this->blockUser($actorId, $targetId, 'Blocked from match card', 'match_card');
             $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE id=?")->execute([$matchId]);
             (new ChatRepository())->closeForBlockedMatch($matchId, 'Closed automatically because the match was blocked.');
             return;
         }
-        if ($action === 'pass') { $this->db->prepare("UPDATE matches SET match_status='passed' WHERE id=? AND match_status<>'mutual'")->execute([$matchId]); return; }
+        if ($action === 'pass') { $this->db->prepare("UPDATE matches SET match_status='passed' WHERE id=? AND match_status<>'mutual'")->execute([$matchId]); $this->db->prepare('UPDATE match_cards SET hidden_until=DATE_ADD(NOW(), INTERVAL 30 DAY), freshness_score=GREATEST(5, freshness_score-20) WHERE match_id=? AND viewer_user_id=?')->execute([$matchId, $actorId]); return; }
         $check = $this->db->prepare("SELECT COUNT(*) FROM match_actions WHERE match_id=? AND action='interested'");
         $check->execute([$matchId]);
         if ((int)$check->fetchColumn() >= 2) {
@@ -148,6 +220,13 @@ class MatchRepository
         $matchId = (int)($stmt->fetchColumn() ?: 0);
         $this->db->prepare("UPDATE matches SET match_status='blocked' WHERE user_one_id=? AND user_two_id=?")->execute([$one, $two]);
         if ($matchId > 0) { (new ChatRepository())->closeForBlockedMatch($matchId, 'Closed automatically because one participant blocked the other.'); }
+        $this->refreshIntelligenceQuietly($blockerId);
+        $this->refreshIntelligenceQuietly($blockedId);
+    }
+
+    private function refreshIntelligenceQuietly(int $userId): void
+    {
+        try { (new \App\Services\MatchIntelligenceService())->calculateForUser($userId); } catch (\Throwable $e) { }
     }
 
     public function blockedPairs(): array
@@ -170,7 +249,12 @@ class MatchRepository
 
     public function allMatches(): array
     {
-        return $this->db->query('SELECT m.*, u1.first_name AS user_one_name, u2.first_name AS user_two_name FROM matches m JOIN users u1 ON u1.id=m.user_one_id JOIN users u2 ON u2.id=m.user_two_id ORDER BY m.updated_at DESC LIMIT 200')->fetchAll();
+        return $this->db->query('SELECT m.*, u1.first_name AS user_one_name, u1.profile_quality_score AS user_one_quality, u1.trust_score AS user_one_trust, u2.first_name AS user_two_name, u2.profile_quality_score AS user_two_quality, u2.trust_score AS user_two_trust FROM matches m JOIN users u1 ON u1.id=m.user_one_id JOIN users u2 ON u2.id=m.user_two_id ORDER BY m.updated_at DESC LIMIT 200')->fetchAll();
+    }
+
+    public function lowConfidenceMatches(): array
+    {
+        return $this->db->query('SELECT m.*, u1.first_name AS user_one_name, u2.first_name AS user_two_name, COALESCE(card_stats.avg_freshness_score, 0) AS avg_freshness_score, COALESCE(card_stats.total_shown_count, 0) AS total_shown_count FROM matches m JOIN users u1 ON u1.id=m.user_one_id JOIN users u2 ON u2.id=m.user_two_id LEFT JOIN (SELECT match_id, AVG(freshness_score) AS avg_freshness_score, SUM(shown_count) AS total_shown_count FROM match_cards GROUP BY match_id) card_stats ON card_stats.match_id=m.id WHERE m.confidence_score < 50 ORDER BY m.confidence_score ASC, m.updated_at DESC LIMIT 50')->fetchAll();
     }
     public function scoresForMatch(int $matchId): array { $stmt=$this->db->prepare('SELECT * FROM match_scores WHERE match_id=? ORDER BY score_type'); $stmt->execute([$matchId]); return $stmt->fetchAll(); }
     public function explanationForMatch(int $matchId): ?array { $stmt=$this->db->prepare('SELECT * FROM match_explanations WHERE match_id=?'); $stmt->execute([$matchId]); return $stmt->fetch() ?: null; }

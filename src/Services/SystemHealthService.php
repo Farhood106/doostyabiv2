@@ -7,7 +7,7 @@ class SystemHealthService
 {
     public function report(): array
     {
-        $tables = ['roles','permissions','role_permissions','users','goals','user_goals','provinces','cities','form_steps','question_groups','questions','question_options','user_answers','user_answer_options','user_answer_cities','user_onboarding_progress','audit_logs','admin_settings', 'blocks','match_recommendation_queue','matches','match_scores','match_cards','match_actions','match_explanations'];
+        $tables = ['roles','permissions','role_permissions','users','goals','user_goals','provinces','cities','form_steps','question_groups','questions','question_options','user_answers','user_answer_options','user_answer_cities','user_onboarding_progress','audit_logs','admin_settings', 'blocks','match_recommendation_queue','matches','match_scores','match_cards','match_actions','match_explanations','privacy_shields','support_departments','support_conversations','support_participants','support_messages','support_assignments','support_quick_replies','support_ratings'];
         $dbOk = false; $dbError = null; $tableStatus = [];
         try {
             $db = Database::connection();
