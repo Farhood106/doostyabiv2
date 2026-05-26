@@ -303,7 +303,7 @@ class AdminController
         Auth::requireAdmin();
         (new SupportRepository())->reopen((int)($_POST['conversation_id'] ?? 0));
         \flash('success', 'گفتگو دوباره باز شد.');
-        \r\redirect('/admin/support');
+        \redirect('/admin/support');
     }
 
     public function archiveSupport(): void
@@ -312,7 +312,7 @@ class AdminController
         Auth::requireAdmin();
         (new SupportRepository())->archive((int)($_POST['conversation_id'] ?? 0));
         \flash('success', 'گفتگو بایگانی شد.');
-        \r\redirect('/admin/support');
+        \redirect('/admin/support');
     }
 
     public function deleteQuickReply(): void
@@ -321,7 +321,14 @@ class AdminController
         Auth::requireAdmin();
         (new SupportRepository())->deleteQuickReply((int)($_POST['id'] ?? 0));
         \flash('success', 'پاسخ آماده حذف شد.');
-        \r\redirect('/admin/support');
+        \redirect('/admin/support');
+    }
+
+    public function safetyDiagnostics(): void
+    {
+        Auth::requireAdmin();
+        $result = (new \App\Services\SafetyConsistencyService())->repairAndReport();
+        View::render('admin/safety_diagnostics', ['result' => $result]);
     }
 
     public function moderation(): void

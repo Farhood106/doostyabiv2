@@ -7,7 +7,6 @@ use App\Repositories\ChatRepository;
 use App\Repositories\RevealRepository;
 use App\Services\VisibilityGuardService;
 use App\Services\MatchIntelligenceService;
-use App\Repositories\ReportRepository;
 
 class ChatController
 {
@@ -22,9 +21,8 @@ class ChatController
         $user = Auth::requireLogin();
         $repo = new ChatRepository();
         $chat = $repo->findForParticipant($id, (int)$user['id']);
-        if (!$chat) {
-            http_response_code(404);
-            exit('Chat not found');
+        if (!$chat || !(new VisibilityGuardService())->canUsersSeeEachOther((int)$chat['user_one_id'], (int)$chat['user_two_id'])) {
+            http_response_code(403); exit('Forbidden');
         }
         $revealRepo = new RevealRepository();
         View::render('chats/show', [
@@ -41,22 +39,25 @@ class ChatController
     {
         \verify_csrf();
         $user = Auth::requireLogin();
-        $sent = (new ChatRepository())->sendMessage($id, (int)$user['id'], (string)($_POST['body'] ?? ''));
+        $repo = new ChatRepository();
+        $chat = $repo->findForParticipant($id, (int)$user['id']);
+        if (!$chat || !(new VisibilityGuardService())->canUsersSeeEachOther((int)$chat['user_one_id'], (int)$chat['user_two_id'])) { \flash('error','این گفتگو در دسترس نیست.'); \redirect('/chats'); }
+        $sent = $repo->sendMessage($id, (int)$user['id'], (string)($_POST['body'] ?? ''));
         if ($sent) { (new MatchIntelligenceService())->calculateForUser((int)$user['id']); }
-        \flash($sent ? 'success' : 'error', $sent ? 'پیام ارسال شد.' : 'پیام ارسال نشد. ممکن است گفت‌وگو بسته یا مسدود باشد، یا متن پیام خالی/بیش از حد طولانی باشد.');
+        \flash($sent ? 'success' : 'error', $sent ? 'پیام ارسال شد.' : 'پیام ارسال نشد.');
         \redirect('/chats/' . $id);
     }
-
 
     public function requestReveal(int $id): void
     {
         \verify_csrf();
         $user = Auth::requireLogin();
-$chat = $repo->findForUser($id, (int)$user['id']);
-        if ($chat && !(new VisibilityGuardService())->canUsersSeeEachOther((int)$chat['user_one_id'], (int)$chat['user_two_id'])) { \flash('error','این درخواست در دسترس نیست.'); \redirect('/chats/' . $id); }
+        $repo = new ChatRepository();
+        $chat = $repo->findForParticipant($id, (int)$user['id']);
+        if (!$chat || !(new VisibilityGuardService())->canUsersSeeEachOther((int)$chat['user_one_id'], (int)$chat['user_two_id'])) { \flash('error','این درخواست در دسترس نیست.'); \redirect('/chats/' . $id); }
         $created = (new RevealRepository())->createRequest($id, (int)$user['id'], (int)($_POST['reveal_type_id'] ?? 0), (string)($_POST['request_message'] ?? ''));
         if ($created) { (new MatchIntelligenceService())->calculateForUser((int)$user['id']); }
-        \flash($created ? 'success' : 'error', $created ? 'درخواست نمایش ارسال شد.' : 'درخواست نمایش ثبت نشد. ممکن است گفت‌وگو بسته یا مسدود باشد، دوطرفه نباشد یا درخواست مشابهی در انتظار پاسخ باشد.');
+        \flash($created ? 'success' : 'error', $created ? 'درخواست نمایش ارسال شد.' : 'درخواست نمایش ثبت نشد.');
         \redirect('/chats/' . $id);
     }
 
@@ -65,22 +66,9 @@ $chat = $repo->findForUser($id, (int)$user['id']);
         \verify_csrf();
         $user = Auth::requireLogin();
         $chatId = (int)($_POST['chat_id'] ?? 0);
-        $status = (string)($_POST['status'] ?? '');
-        $responded = (new RevealRepository())->respond((int)($_POST['request_id'] ?? 0), (int)$user['id'], $status, (string)($_POST['response_note'] ?? ''));
+        $responded = (new RevealRepository())->respond((int)($_POST['request_id'] ?? 0), (int)$user['id'], (string)($_POST['status'] ?? ''), (string)($_POST['response_note'] ?? ''));
         if ($responded) { (new MatchIntelligenceService())->calculateForUser((int)$user['id']); }
-        \flash($responded ? 'success' : 'error', $responded ? 'درخواست نمایش به‌روزرسانی شد.' : 'درخواست نمایش به‌روزرسانی نشد. فقط دریافت‌کننده درخواست می‌تواند درخواست‌های در انتظار را تأیید یا رد کند.');
-        \redirect('/chats/' . $chatId);
-    }
-
-    public function flagMessage(): void
-    {
-        \verify_csrf();
-        $user = Auth::requireLogin();
-        $chatId = (int)($_POST['chat_id'] ?? 0);
-        $messageId = (int)($_POST['message_id'] ?? 0);
-        $flagged = (new ChatRepository())->flagMessage($messageId, (int)$user['id'], (string)($_POST['reason'] ?? ''));
-        if ($flagged) { (new MatchIntelligenceService())->calculateForUser((int)$user['id']); }
-        \flash($flagged ? 'success' : 'error', $flagged ? 'پیام برای بررسی مدیران علامت‌گذاری شد.' : 'پیام گزارش نشد.');
+        \flash($responded ? 'success' : 'error', $responded ? 'درخواست نمایش به‌روزرسانی شد.' : 'درخواست نمایش به‌روزرسانی نشد.');
         \redirect('/chats/' . $chatId);
     }
 }

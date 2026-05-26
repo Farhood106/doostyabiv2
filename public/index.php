@@ -59,6 +59,7 @@ $router->post('/admin/catalogs/cities/delete', [AdminController::class, 'deleteC
 $router->get('/admin/health', [AdminController::class, 'health']);
 $router->get('/admin/intelligence', [AdminController::class, 'intelligence']);
 $router->get('/admin/safety/privacy-shields', [AdminController::class, 'privacyShields']);
+$router->get('/admin/safety/diagnostics', [AdminController::class, 'safetyDiagnostics']);
 $router->get('/admin/support', [AdminController::class, 'supportCenter']);
 $router->post('/admin/support/assign', [AdminController::class, 'assignSupport']);
 $router->post('/admin/support/close', [AdminController::class, 'closeSupport']);
