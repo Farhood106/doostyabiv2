@@ -17,6 +17,10 @@ use App\Repositories\MatchRepository;
 use App\Repositories\RevealRepository;
 use App\Repositories\ReportRepository;
 use App\Repositories\ChatRepository;
+use App\Repositories\IntelligenceRepository;
+use App\Repositories\PrivacyShieldRepository;
+use App\Repositories\SupportRepository;
+use App\Services\MatchIntelligenceService;
 use App\Services\FormBuilderService;
 use App\Services\MatchService;
 use App\Services\SystemHealthService;
@@ -39,41 +43,41 @@ class AdminController
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
         $errors = (new AdminCatalogService())->validateTitle($_POST);
-        if (!$errors) { $id = (new FormRepository())->saveStep($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'form_step', $id, ['title' => $_POST['title']]); \flash('success', 'Step saved.'); }
+        if (!$errors) { $id = (new FormRepository())->saveStep($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'form_step', $id, ['title' => $_POST['title']]); \flash('success', 'مرحله ذخیره شد.'); }
         \redirect('/admin/forms');
     }
     public function deleteStep(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new FormRepository())->softDeleteStep($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'form_step', $id); \flash('success', 'Step disabled.'); }
+        if ($id > 0) { (new FormRepository())->softDeleteStep($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'form_step', $id); \flash('success', 'مرحله غیرفعال شد.'); }
         \redirect('/admin/forms');
     }
     public function saveGroup(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
         $errors = (new AdminCatalogService())->validateTitle($_POST);
-        if (empty($_POST['form_step_id'])) { $errors['form_step_id'] = 'Step is required.'; }
-        if (!$errors) { $id = (new FormRepository())->saveGroup($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'question_group', $id, ['title' => $_POST['title']]); \flash('success', 'Group saved.'); }
+        if (empty($_POST['form_step_id'])) { $errors['form_step_id'] = 'انتخاب مرحله ضروری است.'; }
+        if (!$errors) { $id = (new FormRepository())->saveGroup($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'question_group', $id, ['title' => $_POST['title']]); \flash('success', 'گروه ذخیره شد.'); }
         \redirect('/admin/forms');
     }
     public function deleteGroup(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new FormRepository())->softDeleteGroup($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'question_group', $id); \flash('success', 'Group disabled.'); }
+        if ($id > 0) { (new FormRepository())->softDeleteGroup($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'question_group', $id); \flash('success', 'گروه غیرفعال شد.'); }
         \redirect('/admin/forms');
     }
     public function saveQuestion(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
         [$ok, $errors] = (new FormBuilderService())->saveQuestion($_POST, (int)$admin['id']);
-        if ($ok) { \flash('success', 'Question saved.'); \redirect('/admin/forms'); }
+        if ($ok) { \flash('success', 'پرسش ذخیره شد.'); \redirect('/admin/forms'); }
         $repo = new FormRepository();
         View::render('admin/form_builder', ['steps' => $repo->allSteps(), 'groups' => $repo->allGroups(), 'questions' => $repo->allQuestions(), 'types' => FormBuilderService::TYPES, 'errors' => $errors, 'editQuestion' => null]);
     }
     public function deleteQuestion(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new FormRepository())->softDeleteQuestion($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'question', $id); \flash('success', 'Question disabled.'); }
+        if ($id > 0) { (new FormRepository())->softDeleteQuestion($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'question', $id); \flash('success', 'پرسش غیرفعال شد.'); }
         \redirect('/admin/forms');
     }
     public function catalogs(): void
@@ -85,37 +89,37 @@ class AdminController
     public function saveGoal(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
-        if (!(new AdminCatalogService())->validateTitle($_POST)) { $id = (new GoalRepository())->save($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'goal', $id, ['title' => $_POST['title']]); \flash('success', 'Goal saved.'); }
+        if (!(new AdminCatalogService())->validateTitle($_POST)) { $id = (new GoalRepository())->save($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'goal', $id, ['title' => $_POST['title']]); \flash('success', 'هدف ذخیره شد.'); }
         \redirect('/admin/catalogs');
     }
     public function deleteGoal(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new GoalRepository())->softDelete($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'goal', $id); \flash('success', 'Goal disabled.'); }
+        if ($id > 0) { (new GoalRepository())->softDelete($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'goal', $id); \flash('success', 'هدف غیرفعال شد.'); }
         \redirect('/admin/catalogs');
     }
     public function saveProvince(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
-        if (!(new AdminCatalogService())->validateTitle($_POST, 'name')) { $id = (new LocationRepository())->saveProvince($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'province', $id, ['name' => $_POST['name']]); \flash('success', 'Province saved.'); }
+        if (!(new AdminCatalogService())->validateTitle($_POST, 'name')) { $id = (new LocationRepository())->saveProvince($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'province', $id, ['name' => $_POST['name']]); \flash('success', 'استان ذخیره شد.'); }
         \redirect('/admin/catalogs');
     }
     public function deleteProvince(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new LocationRepository())->softDeleteProvince($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'province', $id); \flash('success', 'Province disabled.'); }
+        if ($id > 0) { (new LocationRepository())->softDeleteProvince($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'province', $id); \flash('success', 'استان غیرفعال شد.'); }
         \redirect('/admin/catalogs');
     }
     public function saveCity(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage');
-        if (!(new AdminCatalogService())->validateCity($_POST)) { $id = (new LocationRepository())->saveCity($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'city', $id, ['name' => $_POST['name']]); \flash('success', 'City saved.'); }
+        if (!(new AdminCatalogService())->validateCity($_POST)) { $id = (new LocationRepository())->saveCity($_POST); (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'city', $id, ['name' => $_POST['name']]); \flash('success', 'شهر ذخیره شد.'); }
         \redirect('/admin/catalogs');
     }
     public function deleteCity(): void
     {
         \verify_csrf(); $admin = Auth::requirePermission('forms.manage'); $id = (int)($_POST['id'] ?? 0);
-        if ($id > 0) { (new LocationRepository())->softDeleteCity($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'city', $id); \flash('success', 'City disabled.'); }
+        if ($id > 0) { (new LocationRepository())->softDeleteCity($id); (new AuditLogRepository())->record((int)$admin['id'], 'soft_deleted', 'city', $id); \flash('success', 'شهر غیرفعال شد.'); }
         \redirect('/admin/catalogs');
     }
     public function users(): void
@@ -128,8 +132,9 @@ class AdminController
         Auth::requirePermission('users.view');
         $id = (int)($_GET['id'] ?? 0);
         $user = (new UserRepository())->find($id);
-        if (!$user) { http_response_code(404); exit('User not found'); }
-        View::render('admin/user_detail', ['profile' => $user, 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
+        if (!$user) { http_response_code(404); exit('عضو پیدا نشد'); }
+        (new MatchIntelligenceService())->calculateForUser($id);
+        View::render('admin/user_detail', ['profile' => (new UserRepository())->find($id), 'goals' => (new GoalRepository())->forUser($id), 'answers' => (new FormRepository())->groupedQuestionsWithAnswersForUser($id), 'progress' => (new AnswerRepository())->progressForUser($id)]);
     }
 
 
@@ -154,7 +159,7 @@ class AdminController
         $userId = (int)($_POST['user_id'] ?? 0);
         if ($userId > 0) {
             $count = (new MatchService())->runForUser($userId, !empty($_POST['recalculate']), 25);
-            \flash('success', 'Generated or updated ' . $count . ' match recommendations.');
+            \flash('success', 'تعداد ' . $count . ' معرفی ایجاد یا به‌روزرسانی شد.');
         }
         \redirect('/admin/matches');
     }
@@ -166,7 +171,7 @@ class AdminController
         $matchId = (int)($_POST['match_id'] ?? 0);
         if ($matchId > 0) {
             (new MatchRepository())->resetMatch($matchId, !empty($_POST['clear_actions']));
-            \flash('success', 'Match reset.');
+            \flash('success', 'معرفی بازنشانی شد.');
         }
 
         \redirect('/admin/matches');
@@ -179,7 +184,7 @@ class AdminController
         $pair = $repo->pairForMatch((int)($_POST['match_id'] ?? 0));
         if ($pair) {
             (new MatchService())->runForUser((int)$pair['user_one_id'], true, 50);
-            \flash('success', 'Match pair recalculated.');
+            \flash('success', 'این جفت معرفی دوباره محاسبه شد.');
         }
 
         \redirect('/admin/matches');
@@ -196,7 +201,7 @@ class AdminController
         Auth::requireAdmin();
         $repo = new ChatRepository();
         $chat = $repo->findForAdmin($id);
-        if (!$chat) { http_response_code(404); exit('Chat not found'); }
+        if (!$chat) { http_response_code(404); exit('گفت‌وگو پیدا نشد'); }
         View::render('admin/chat_detail', ['chat' => $chat, 'messages' => $repo->messagesForAdmin($id)]);
     }
 
@@ -205,7 +210,7 @@ class AdminController
         \verify_csrf();
         $admin = Auth::requireAdmin();
         $closed = (new ChatRepository())->closeByAdmin($id, (int)$admin['id'], (string)($_POST['reason'] ?? ''));
-        \flash($closed ? 'success' : 'error', $closed ? 'Chat closed.' : 'Provide a close reason before closing chat.');
+        \flash($closed ? 'success' : 'error', $closed ? 'گفت‌وگو بسته شد.' : 'پیش از بستن گفت‌وگو، دلیل کوتاهی وارد کنید.');
         \redirect('/admin/chats/' . $id);
     }
 
@@ -229,13 +234,102 @@ class AdminController
         $id = (new RevealRepository())->saveType($_POST);
         if ($id > 0) {
             (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'reveal_type', $id, ['title' => $_POST['title'] ?? '']);
-            \flash('success', 'Reveal type saved.');
+            \flash('success', 'نوع نمایش ذخیره شد.');
         } else {
-            \flash('error', 'Reveal type could not be saved. Use a title, slug, and allowed field key.');
+            \flash('error', 'نوع نمایش ذخیره نشد. عنوان، شناسه متنی و کلید فیلد مجاز را بررسی کنید.');
         }
         \redirect('/admin/reveals');
     }
 
+
+    public function intelligence(): void
+    {
+        Auth::requireAdmin();
+        $service = new MatchIntelligenceService();
+        foreach ((new UserRepository())->allMembers() as $member) { $service->calculateForUser((int)$member['id']); }
+        View::render('admin/intelligence', ['members' => (new IntelligenceRepository())->overview(), 'lowConfidenceMatches' => (new MatchRepository())->lowConfidenceMatches()]);
+    }
+
+
+    public function privacyShields(): void
+    {
+        Auth::requireAdmin();
+        View::render('admin/privacy_shields', ['items' => (new PrivacyShieldRepository())->allForAdmin()]);
+    }
+
+    public function supportCenter(): void
+    {
+        Auth::requireAdmin();
+        $repo = new SupportRepository();
+        View::render('admin/support_center', ['conversations' => $repo->allForAdmin($_GET), 'quickReplies' => $repo->quickReplies(), 'categories' => $repo->categories(), 'staff' => (new UserRepository())->allStaff(), 'filters' => $_GET]);
+    }
+
+    public function assignSupport(): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        (new SupportRepository())->assign((int)($_POST['conversation_id'] ?? 0), (int)$admin['id'], (int)($_POST['assigned_user_id'] ?? 0), (string)($_POST['assigned_role'] ?? 'support_agent'));
+        \flash('success', 'گفتگو به همکار پشتیبانی ارجاع شد.');
+        
+\redirect('/admin/support');
+    }
+
+    public function closeSupport(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        (new SupportRepository())->close((int)($_POST['conversation_id'] ?? 0));
+        \flash('success', 'گفتگوی پشتیبانی بسته شد.');
+        
+\redirect('/admin/support');
+    }
+
+    public function saveQuickReply(): void
+    {
+        \verify_csrf();
+        $admin = Auth::requireAdmin();
+        $data = $_POST;
+        $data['created_by_user_id'] = (int)$admin['id'];
+        (new SupportRepository())->saveQuickReply($data);
+        \flash('success', 'پاسخ آماده ذخیره شد.');
+        
+\redirect('/admin/support');
+    }
+
+
+    public function reopenSupport(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        (new SupportRepository())->reopen((int)($_POST['conversation_id'] ?? 0));
+        \flash('success', 'گفتگو دوباره باز شد.');
+        \redirect('/admin/support');
+    }
+
+    public function archiveSupport(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        (new SupportRepository())->archive((int)($_POST['conversation_id'] ?? 0));
+        \flash('success', 'گفتگو بایگانی شد.');
+        \redirect('/admin/support');
+    }
+
+    public function deleteQuickReply(): void
+    {
+        \verify_csrf();
+        Auth::requireAdmin();
+        (new SupportRepository())->deleteQuickReply((int)($_POST['id'] ?? 0));
+        \flash('success', 'پاسخ آماده حذف شد.');
+        \redirect('/admin/support');
+    }
+
+    public function safetyDiagnostics(): void
+    {
+        Auth::requireAdmin();
+        $result = (new \App\Services\SafetyConsistencyService())->repairAndReport();
+        View::render('admin/safety_diagnostics', ['result' => $result]);
+    }
 
     public function moderation(): void
     {
@@ -250,7 +344,7 @@ class AdminController
     {
         Auth::requireAdmin();
         $report = (new ReportRepository())->findForAdmin($id);
-        if (!$report) { http_response_code(404); exit('Report not found'); }
+        if (!$report) { http_response_code(404); exit('گزارش پیدا نشد'); }
         View::render('admin/report_detail', ['report' => $report]);
     }
 
@@ -259,7 +353,7 @@ class AdminController
         \verify_csrf();
         $admin = Auth::requireAdmin();
         $updated = (new ReportRepository())->updateModeration($id, (int)$admin['id'], (string)($_POST['status'] ?? 'reviewing'), (string)($_POST['priority'] ?? 'normal'), (string)($_POST['admin_resolution_note'] ?? ''), !empty($_POST['assign_to_me']));
-        \flash($updated ? 'success' : 'error', $updated ? 'Report updated.' : 'Report could not be updated.');
+        \flash($updated ? 'success' : 'error', $updated ? 'گزارش به‌روزرسانی شد.' : 'گزارش به‌روزرسانی نشد.');
         \redirect('/admin/moderation/' . $id);
     }
 
@@ -269,10 +363,10 @@ class AdminController
         Auth::requireAdmin();
         $report = (new ReportRepository())->findForAdmin($id);
         if ($report && !empty($report['reported_user_id'])) {
-            (new MatchRepository())->blockUser((int)$report['reporter_user_id'], (int)$report['reported_user_id'], 'Blocked by moderation after report #' . $id, 'moderation_report');
-            \flash('success', 'Reported user blocked for the reporter.');
+            (new MatchRepository())->blockUser((int)$report['reporter_user_id'], (int)$report['reported_user_id'], 'مسدودشده توسط رسیدگی پس از گزارش #' . $id, 'moderation_report');
+            \flash('success', 'عضو گزارش‌شده برای گزارش‌دهنده مسدود شد.');
         } else {
-            \flash('error', 'Reported user could not be blocked.');
+            \flash('error', 'عضو گزارش‌شده مسدود نشد.');
         }
         \redirect('/admin/moderation/' . $id);
     }
@@ -287,7 +381,7 @@ class AdminController
         \verify_csrf();
         $admin = Auth::requireAdmin();
         [$ok, $errors] = (new AdminSettingsService())->save($_POST, (int)$admin['id']);
-        if ($ok) { (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'admin_settings', null); \flash('success', 'Settings saved.'); \redirect('/admin/settings'); }
+        if ($ok) { (new AuditLogRepository())->record((int)$admin['id'], 'saved', 'admin_settings', null); \flash('success', 'تنظیمات ذخیره شد.'); \redirect('/admin/settings'); }
         View::render('admin/settings', ['settings' => $_POST, 'errors' => $errors]);
     }
     public function health(): void

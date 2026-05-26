@@ -6,6 +6,13 @@ use PDO;
 
 class SafetyRepository
 {
+    public function isBlockedBetween(int $a, int $b): bool
+    {
+        $stmt = $this->db->prepare("SELECT 1 FROM blocks WHERE deleted_at IS NULL AND ((blocker_user_id=? AND blocked_user_id=?) OR (blocker_user_id=? AND blocked_user_id=?)) LIMIT 1");
+        $stmt->execute([$a,$b,$b,$a]);
+        return (bool)$stmt->fetchColumn();
+    }
+
     private PDO $db;
 
     public function __construct()

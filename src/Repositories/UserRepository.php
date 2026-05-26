@@ -42,4 +42,10 @@ class UserRepository
     {
         return $this->db->query("SELECT u.*, r.name AS role_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.name='user' ORDER BY u.created_at DESC")->fetchAll();
     }
+
+    public function allStaff(): array
+    {
+        return $this->db->query("SELECT u.id, u.first_name, u.last_name, r.name AS role_name FROM users u JOIN roles r ON r.id=u.role_id WHERE r.name IN ('admin','support_agent','advisor') AND u.is_active=1 ORDER BY r.name, u.first_name, u.last_name")->fetchAll();
+    }
+
 }

@@ -18,22 +18,55 @@ class OnboardingService
         $normalized = [];
         foreach ($questions as $id => $question) {
             $value = $input['answers'][$id] ?? null;
-            if ($question['is_required'] && ($value === null || $value === '' || $value === [])) { $errors[$id] = 'This answer is required.'; continue; }
+            if ($question['is_required'] && ($value === null || $value === '' || $value === [])) { $errors[$id] = 'پاسخ به این پرسش ضروری است.'; continue; }
             if ($value === null || $value === '' || $value === []) { continue; }
             [$valid, $clean] = $this->validateAndNormalize($question, $value, $form);
-            if (!$valid) { $errors[$id] = 'Invalid answer format.'; continue; }
+            if (!$valid) { $errors[$id] = 'قالب پاسخ قابل قبول نیست.'; continue; }
             $normalized[$id] = $clean;
         }
         if ($errors) { return [false, $errors]; }
         (new GoalRepository())->syncUserGoals($userId, $input['goals'] ?? []);
         $answers = new AnswerRepository();
+        $previousProgress = $answers->progressForUser($userId);
         foreach ($normalized as $id => $value) { $answers->saveAnswer($userId, $questions[$id], $value); }
+        $requiredQuestions = 0;
         $answeredRequired = 0;
+        $answeredOptional = 0;
+        $optionalQuestions = 0;
         $existing = $answers->existingForUser($userId);
-        foreach ($questions as $id => $question) { if (!$question['is_required'] || isset($existing[$id]) || isset($normalized[$id])) { $answeredRequired++; } }
-        $complete = $answeredRequired === count($questions);
-        $answers->updateProgress($userId, $complete ? null : ($steps[0]['id'] ?? null), $complete ? count($steps) : 0, $complete);
+        foreach ($questions as $id => $question) {
+            $answered = isset($existing[$id]) || isset($normalized[$id]);
+            if ($question['is_required']) { $requiredQuestions++; if ($answered) { $answeredRequired++; } }
+            if (!$question['is_required']) { $optionalQuestions++; if ($answered) { $answeredOptional++; } }
+        }
+        $complete = $requiredQuestions > 0 && $answeredRequired === $requiredQuestions;
+        $skippedOptional = max(0, $optionalQuestions - $answeredOptional);
+        $fatigueScore = $optionalQuestions ? round(($skippedOptional / $optionalQuestions) * 100, 2) : 0.0;
+        $answers->updateProgress($userId, $complete ? null : ($steps[0]['id'] ?? null), $complete ? count($steps) : 0, $complete, $skippedOptional, $fatigueScore, $this->engagementMetadata($previousProgress, count($existing), $answeredOptional, $skippedOptional));
+        (new MatchIntelligenceService())->calculateForUser($userId);
         return [true, []];
+    }
+
+    private function engagementMetadata(?array $previousProgress, int $answeredQuestions, int $answeredOptional, int $skippedOptional): array
+    {
+        $previous = json_decode((string)($previousProgress['engagement_metadata_json'] ?? '{}'), true) ?: [];
+        $now = time();
+        $startedAt = strtotime((string)($previousProgress['started_at'] ?? '')) ?: $now;
+        $lastUpdatedAt = strtotime((string)($previousProgress['updated_at'] ?? '')) ?: null;
+        $submitCount = ((int)($previous['submit_count'] ?? 0)) + 1;
+        $secondsSinceStart = max(0, $now - $startedAt);
+        $secondsSinceLastUpdate = $lastUpdatedAt ? max(0, $now - $lastUpdatedAt) : null;
+
+        return array_merge($previous, [
+            'answered_questions' => $answeredQuestions,
+            'answered_optional' => $answeredOptional,
+            'skipped_optional' => $skippedOptional,
+            'submit_count' => $submitCount,
+            'seconds_since_start' => $secondsSinceStart,
+            'seconds_since_last_update' => $secondsSinceLastUpdate,
+            'average_seconds_per_answer' => $answeredQuestions > 0 ? round($secondsSinceStart / $answeredQuestions, 2) : null,
+            'last_submit_at' => date('c', $now),
+        ]);
     }
 
     private function validateAndNormalize(array $question, mixed $value, FormRepository $form): array

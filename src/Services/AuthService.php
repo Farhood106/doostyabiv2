@@ -19,10 +19,10 @@ class AuthService
     public function register(array $data): array
     {
         $errors = [];
-        if (!filter_var($data['email'] ?? '', FILTER_VALIDATE_EMAIL)) { $errors['email'] = 'A valid email is required.'; }
-        if (strlen($data['password'] ?? '') < 8) { $errors['password'] = 'Password must be at least 8 characters.'; }
-        if (($data['password'] ?? '') !== ($data['password_confirm'] ?? '')) { $errors['password_confirm'] = 'Passwords must match.'; }
-        if (trim($data['first_name'] ?? '') === '') { $errors['first_name'] = 'First name is required.'; }
+        if (!filter_var($data['email'] ?? '', FILTER_VALIDATE_EMAIL)) { $errors['email'] = 'لطفاً یک ایمیل معتبر وارد کنید.'; }
+        if (strlen($data['password'] ?? '') < 8) { $errors['password'] = 'رمز عبور باید حداقل ۸ کاراکتر باشد.'; }
+        if (($data['password'] ?? '') !== ($data['password_confirm'] ?? '')) { $errors['password_confirm'] = 'رمز عبور و تکرار آن باید یکسان باشند.'; }
+        if (trim($data['first_name'] ?? '') === '') { $errors['first_name'] = 'وارد کردن نام ضروری است.'; }
         if (!empty($errors)) { return [false, $errors]; }
         try {
             $id = (new UserRepository())->createMember([

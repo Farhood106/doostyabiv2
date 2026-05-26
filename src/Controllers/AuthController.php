@@ -11,7 +11,7 @@ class AuthController
     {
         \verify_csrf();
         if ((new AuthService())->login($_POST['email'] ?? '', $_POST['password'] ?? '')) { \redirect('/'); }
-        \flash('error', 'Invalid credentials.');
+        \flash('error', 'ایمیل یا رمز عبور درست نیست.');
         \redirect('/login');
     }
     public function showRegister(): void { View::render('auth/register'); }
