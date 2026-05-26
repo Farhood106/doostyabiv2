@@ -22,11 +22,9 @@ class MatchRepository
             JOIN roles r ON r.id=u.role_id AND r.name='user'
             $goalJoin
             WHERE u.is_active=1 AND u.id<>?
-            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=? AND b.blocked_user_id=u.id) OR (b.blocker_user_id=u.id AND b.blocked_user_id=?)))
-            AND NOT EXISTS (SELECT 1 FROM privacy_shields ps WHERE ps.user_id=? AND ps.deleted_at IS NULL AND ps.hashed_value=SHA2(LOWER(TRIM(u.email)),256))
-            AND NOT EXISTS (SELECT 1 FROM privacy_shields ps2 WHERE ps2.user_id=u.id AND ps2.deleted_at IS NULL AND ps2.hashed_value=SHA2(LOWER(TRIM((SELECT email FROM users WHERE id=? LIMIT 1))),256)) $existingSql
+            $existingSql
             ORDER BY u.profile_quality_score DESC, u.trust_score DESC, u.updated_at DESC, u.id";
-        $params = $allowBroad ? [$userId, $userId, $userId, $userId, $userId] : [$userId, $userId, $userId, $userId, $userId, $userId];
+        $params = $allowBroad ? [$userId] : [$userId, $userId];
         if (!$recalculate) { $params[] = $userId; $params[] = $userId; }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -147,7 +145,6 @@ class MatchRepository
             FROM match_cards mc JOIN matches m ON m.id=mc.match_id
             LEFT JOIN match_actions ma ON ma.match_id=mc.match_id AND ma.actor_user_id=mc.viewer_user_id
             WHERE mc.viewer_user_id=? AND mc.privacy_level='anonymous' AND m.match_status IN ('suggested','mutual')
-            AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.deleted_at IS NULL AND ((b.blocker_user_id=mc.viewer_user_id AND b.blocked_user_id=mc.target_user_id) OR (b.blocker_user_id=mc.target_user_id AND b.blocked_user_id=mc.viewer_user_id)))
             AND COALESCE(ma.action,'') NOT IN ('pass','block')
             AND (mc.hidden_until IS NULL OR mc.hidden_until < NOW())
             $confidenceSql

@@ -12,7 +12,7 @@ class MatchService
     {
         $repo = new MatchRepository();
         (new SafetyConsistencyService())->repairAndReport();
-        $guard = new VisibilityGuardService();
+        $guard = new VisibilityGuardService(); // Single source of truth for pair visibility policy.
         $scorer = new MatchScoringService();
         $cards = new MatchCardService();
         $intel = new MatchIntelligenceService();
@@ -47,7 +47,7 @@ class MatchService
     {
         $repo = new MatchRepository();
         (new SafetyConsistencyService())->repairAndReport();
-        $guard = new VisibilityGuardService(); $count = 0;
+        $guard = new VisibilityGuardService(); // Single source of truth for pair visibility policy. $count = 0;
         foreach (array_slice($repo->activeMembers(), 0, $limit) as $user) { $count += $this->runForUser((int)$user['id'], false, 10); }
         return $count;
     }

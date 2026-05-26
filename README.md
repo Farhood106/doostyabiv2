@@ -567,3 +567,12 @@ The application requires MySQL `utf8mb4` end-to-end for Persian text and Unicode
 - Privacy-first admin visibility: Privacy Shield admin screen shows metadata only (owner/type/date/note), never raw protected values.
 - Manual QA focus: confirm CSRF on forms, participant access checks for support threads, and no private answer leakage in support messages.
 - Known limitations: current privacy shield candidate exclusion is strongest on email hash; phone/name/username hash checks require corresponding normalized source data availability for full coverage.
+
+
+## Visibility architecture consolidation
+
+- `VisibilityGuardService` is the single source of truth for pair visibility decisions and optional denial reasons (`blocked`, `privacy_shield`, `inactive_user`, `stale_state`).
+- Repositories keep data-access responsibilities only; visibility policy is centralized in services for predictability and auditability.
+- `SafetyConsistencyService` handles stale-state repair (matches/chats/cards/mutuals) when visibility policy changes after records already exist.
+- Admin workflow: run `/admin/safety/diagnostics` for operational counters and denial categories.
+- Verification workflow: run `/install/verify_visibility.php` (read-only) to detect illegal visible pairs, illegal open chats, illegal mutual states, and stale visible cards.
